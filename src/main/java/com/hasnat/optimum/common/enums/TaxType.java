@@ -1,0 +1,5 @@
+package com.hasnat.optimum.common.enums;
+public enum TaxType {
+    INPUT_VAT, OUTPUT_VAT, WITHHOLDING_TAX, SERVICE_TAX, CUSTOMS_DUTY,
+    SUPPLEMENTARY_DUTY, EXCISE_DUTY, INCOME_TAX, AIT, TDS, OTHER
+}
