@@ -112,16 +112,16 @@ public class SecurityConfig {
                 )
 
                 // ── Session management ───────────────────────────────────────────
-                .sessionManagement(session -> session
-                        .sessionFixation(fixation ->
-                                fixation.migrateSession()
-                        )
-                        .invalidSessionUrl("/login?invalid")
-                        .maximumSessions(max -> max
-                                .maximumSessions(1)
-                                .expiredUrl("/login?expired")
-                        )
-                )
+//                .sessionManagement(session -> session
+//                        .sessionFixation(fixation ->
+//                                fixation.migrateSession()
+//                        )
+//                        .invalidSessionUrl("/login?invalid")
+//                        .maximumSessions(max -> max
+//                                .maximumSessions(1)
+//                                .expiredUrl("/login?expired")
+//                        )
+//                )
 
                 // ── Exception handling ───────────────────────────────────────────
                 .exceptionHandling(ex -> ex
