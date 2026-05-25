@@ -3,11 +3,15 @@ package com.hasnat.optimum.security.entity;
 import com.hasnat.optimum.common.enums.Module;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity @Table(name = "sec_menus")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Menu {
+public class Menu implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

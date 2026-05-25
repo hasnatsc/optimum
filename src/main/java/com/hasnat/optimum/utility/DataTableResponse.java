@@ -12,53 +12,52 @@ import java.util.List;
  * Generic server-side DataTables response envelope.
  *
  * <p>Complies with the jQuery DataTables server-side processing protocol
- * (v1.10 / 2.x). The controller simply returns this object annotated with
- * {@code @ResponseBody} and Spring's Jackson serializer produces the JSON
- * the DataTable plugin expects.
+ * (v1.10 / 2.x). Controllers return this annotated with {@code @ResponseBody}
+ * and Spring's Jackson serialiser produces the JSON the plugin expects.
  *
- * <h3>Required response fields</h3>
+ * <h3>Required response fields (DataTables protocol)</h3>
  * <pre>
  * {
- *   "draw":            1,           ← echo the request draw int (XSS guard)
- *   "recordsTotal":    250,         ← total rows in table before any filter
- *   "recordsFiltered": 38,          ← rows after search/filter (drives pagination)
- *   "data":            [ ... ]      ← array of row objects
+ *   "draw":            1,      ← echoed from request (XSS guard)
+ *   "recordsTotal":    250,    ← total rows before any filter
+ *   "recordsFiltered": 38,     ← rows after filter (drives pagination)
+ *   "data":            [...]   ← current page rows
  * }
  * </pre>
  *
  * <h3>Optional fields</h3>
  * <pre>
- *   "error"   — non-null triggers the DataTables error dialog
- *   "success" — internal API consistency flag (ignored by DataTables)
+ *   "error"   — non-null triggers DataTables' built-in error dialog
+ *   "success" — internal API flag (ignored by DataTables)
  *   "message" — human-readable status (ignored by DataTables)
  * </pre>
  *
- * <h3>Usage — success path</h3>
+ * <h3>Recommended usage — use static factories, not the raw builder</h3>
  * <pre>{@code
- * return DataTableResponse.<Map<String, Object>>builder()
- *     .draw(draw)
- *     .recordsTotal(totalCount)
- *     .recordsFiltered(filteredCount)
- *     .data(rows)
- *     .build();
- * }</pre>
+ * // Normal result
+ * return DataTableResponse.of(draw, total, filtered, rows);
  *
- * <h3>Usage — error path</h3>
- * <pre>{@code
- * return DataTableResponse.error(draw, "Database connection failed.");
- * }</pre>
+ * // No active filter (total == filtered)
+ * return DataTableResponse.of(draw, total, rows);
  *
- * <h3>Usage — empty result</h3>
- * <pre>{@code
+ * // Zero results
  * return DataTableResponse.empty(draw);
+ *
+ * // Query failed
+ * } catch (Exception e) {
+ *     return DataTableResponse.error(draw, e.getMessage());
+ * }
  * }</pre>
  *
- * @param <T> Row type — typically {@code Map<String, Object>} for ad-hoc
- *            JdbcTemplate queries, or a typed DTO for JPA projections.
+ * <p>The raw {@code builder()} is available for edge cases where you need
+ * partial field control, but it skips validation — prefer the factories.
+ *
+ * @param <T> Row type — typically {@code Map<String, Object>} for JdbcTemplate
+ *            queries, or a typed DTO for JPA projections.
  */
 @Getter
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)  // omit null fields (error, message) from JSON
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class DataTableResponse<T> {
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -67,106 +66,115 @@ public class DataTableResponse<T> {
 
     /**
      * Echo of the {@code draw} request parameter.
-     * <p>DataTables uses this counter to match responses to requests and to
-     * prevent cross-site scripting attacks via JSON injection. You MUST echo
-     * it back unchanged.
+     * DataTables matches responses to requests with this counter and uses it
+     * to guard against JSON-injection (XSS). Must be echoed unchanged.
      */
     @JsonProperty("draw")
     private final int draw;
 
     /**
-     * Total number of records in the underlying data set (before any filter).
-     * <p>Drives the "Showing X of N entries" display text.
+     * Total records in the data set before any search/filter is applied.
+     * Shown in the "Showing X of <b>N</b> entries" text.
      */
     @JsonProperty("recordsTotal")
     private final long recordsTotal;
 
     /**
-     * Total number of records after applying the current search/filter.
-     * <p>Drives pagination controls. When there is no active filter this
-     * equals {@link #recordsTotal}.
+     * Total records after applying the current search/filter.
+     * Drives pagination controls. Equals {@link #recordsTotal} when no
+     * filter is active. Must be ≤ {@code recordsTotal}.
      */
     @JsonProperty("recordsFiltered")
     private final long recordsFiltered;
 
     /**
-     * The row data for the current page.
-     * <p>Never null — defaults to an empty list via the builder default.
+     * Row data for the current page. Never null in a valid response.
      */
     @JsonProperty("data")
-    @Builder.Default
-    private final List<T> data = Collections.emptyList();
+    private final List<T> data;
 
     // ─────────────────────────────────────────────────────────────────────────
     // Optional DataTables protocol field
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Error message displayed by DataTables in an alert dialog.
-     * <p>Set this (and leave {@link #data} empty) when the query fails.
-     * The plugin treats any non-null value as a hard error and stops rendering.
-     * Omitted from JSON when null ({@code @JsonInclude(NON_NULL)}).
+     * Error message shown by DataTables in an alert dialog.
+     * Any non-null value stops normal rendering and shows the error.
+     * Omitted from JSON when null.
      */
     @JsonProperty("error")
     private final String error;
 
     // ─────────────────────────────────────────────────────────────────────────
     // Internal extension fields — consistent with the rest of the API
-    // (ignored by DataTables but read by our own JS error handlers)
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Internal API success flag.
-     * <p>{@code true} for normal responses, {@code false} when
-     * {@link #error} is set. Omitted from JSON when null.
+     * Internal API success flag — ignored by DataTables but read by our
+     * JS error handlers. Omitted from JSON when null.
      */
     @JsonProperty("success")
     private final Boolean success;
 
     /**
-     * Human-readable status message for the front-end.
-     * Omitted from JSON when null.
+     * Human-readable status — omitted from JSON when null.
      */
     @JsonProperty("message")
     private final String message;
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Static factory methods — preferred over the raw builder for common cases
+    // Static factory methods  (preferred over the raw builder)
+    //
+    // Validation lives here, not in a custom builder override.
+    // Overriding Lombok's generated builder class body is unreliable across
+    // Lombok versions — the injected fields may not be visible to hand-written
+    // methods, causing "cannot find symbol: variable data" compile errors.
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Standard success response — all fields explicit.
+     * Standard result with explicit total and filtered counts.
+     * Use when a search/filter is active (total ≠ filtered).
      *
-     * <pre>{@code
-     * DataTableResponse.of(draw, totalCount, filteredCount, rows)
-     * }</pre>
+     * @param draw            echo from request
+     * @param recordsTotal    unfiltered row count
+     * @param recordsFiltered filtered row count (≤ recordsTotal)
+     * @param data            current page rows (null → empty list)
      */
     public static <T> DataTableResponse<T> of(
-            int draw, long recordsTotal, long recordsFiltered, List<T> data) {
+            int    draw,
+            long   recordsTotal,
+            long   recordsFiltered,
+            List<T> data) {
+
+        validate(draw, recordsTotal, recordsFiltered);
 
         return DataTableResponse.<T>builder()
-            .draw(draw)
-            .recordsTotal(recordsTotal)
-            .recordsFiltered(recordsFiltered)
-            .data(data != null ? data : Collections.emptyList())
-            .success(true)
-            .build();
+                .draw(draw)
+                .recordsTotal(recordsTotal)
+                .recordsFiltered(Math.min(recordsFiltered, recordsTotal)) // guard
+                .data(data != null ? data : Collections.emptyList())
+                .success(true)
+                .build();
     }
 
     /**
-     * Convenience overload — recordsTotal == recordsFiltered (no search active).
+     * Convenience overload — no active filter, so total == filtered.
      *
-     * <pre>{@code
-     * DataTableResponse.of(draw, totalCount, rows)
-     * }</pre>
+     * @param draw         echo from request
+     * @param recordsTotal total and filtered row count
+     * @param data         current page rows (null → empty list)
      */
     public static <T> DataTableResponse<T> of(
-            int draw, long recordsTotal, List<T> data) {
+            int    draw,
+            long   recordsTotal,
+            List<T> data) {
+
         return of(draw, recordsTotal, recordsTotal, data);
     }
 
     /**
-     * Empty page — zero rows, zero totals. Useful for early-return guards.
+     * Empty result — zero rows, zero totals.
+     * Use for early-return guards when a required context is missing.
      *
      * <pre>{@code
      * if (warehouseId == null) return DataTableResponse.empty(draw);
@@ -174,93 +182,55 @@ public class DataTableResponse<T> {
      */
     public static <T> DataTableResponse<T> empty(int draw) {
         return DataTableResponse.<T>builder()
-            .draw(draw)
-            .recordsTotal(0L)
-            .recordsFiltered(0L)
-            .data(Collections.emptyList())
-            .success(true)
-            .build();
+                .draw(draw)
+                .recordsTotal(0L)
+                .recordsFiltered(0L)
+                .data(Collections.emptyList())
+                .success(true)
+                .build();
     }
 
     /**
-     * Error response — DataTables will display an alert dialog with the message.
+     * Error result — DataTables displays a native alert dialog with the message.
+     * Sets {@code data} to an empty list so the table renders safely.
      *
      * <pre>{@code
      * } catch (Exception e) {
-     *     return DataTableResponse.error(draw, "Failed to load data: " + e.getMessage());
+     *     return DataTableResponse.error(draw, "Query failed: " + e.getMessage());
      * }
      * }</pre>
      */
     public static <T> DataTableResponse<T> error(int draw, String errorMessage) {
         return DataTableResponse.<T>builder()
-            .draw(draw)
-            .recordsTotal(0L)
-            .recordsFiltered(0L)
-            .data(Collections.emptyList())
-            .error(errorMessage)
-            .success(false)
-            .message(errorMessage)
-            .build();
+                .draw(draw)
+                .recordsTotal(0L)
+                .recordsFiltered(0L)
+                .data(Collections.emptyList())
+                .error(errorMessage)
+                .success(false)
+                .message(errorMessage)
+                .build();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Builder override — ensures data is never null even if not set
+    // Internal validation — called from factory methods only
     // ─────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Custom builder — enforces the DataTables contract at build time.
-     *
-     * <ul>
-     *   <li>{@code draw} must be ≥ 0 (DataTables starts at 1; 0 is safe for manual tests).
-     *   <li>{@code recordsTotal} must be ≥ 0.
-     *   <li>{@code recordsFiltered} must be ≤ {@code recordsTotal}.
-     *   <li>{@code data} is defaulted to an empty list if null.
-     * </ul>
-     */
-    public static class DataTableResponseBuilder<T> {
-
-        /**
-         * Override Lombok's build() to add validation.
-         * Lomboks @Builder generates this method — we override it to add guards.
-         */
-        public DataTableResponse<T> build() {
-
-            // Default data to empty list
-            if (this.data == null) {
-                this.data = Collections.emptyList();
-            }
-
-            // Contract enforcement
-            if (this.draw < 0) {
-                throw new IllegalStateException("DataTableResponse.draw must be >= 0");
-            }
-            if (this.recordsTotal < 0) {
-                throw new IllegalStateException("DataTableResponse.recordsTotal must be >= 0");
-            }
-            if (this.recordsFiltered < 0) {
-                throw new IllegalStateException("DataTableResponse.recordsFiltered must be >= 0");
-            }
-            if (this.recordsFiltered > this.recordsTotal) {
-                // recordsFiltered > recordsTotal breaks DataTables pagination.
-                // Clamp silently rather than throwing, since COUNT(*) / COUNT(DISTINCT)
-                // inconsistencies can cause this in rare race conditions.
-                this.recordsFiltered = this.recordsTotal;
-            }
-
-            // Default success flag based on whether an error was set
-            if (this.success == null) {
-                this.success = (this.error == null);
-            }
-
-            return new DataTableResponse<>(
-                this.draw,
-                this.recordsTotal,
-                this.recordsFiltered,
-                this.data,
-                this.error,
-                this.success,
-                this.message
-            );
+    private static void validate(int draw, long recordsTotal, long recordsFiltered) {
+        if (draw < 0) {
+            throw new IllegalArgumentException(
+                "DataTableResponse.draw must be >= 0, got: " + draw);
         }
+        if (recordsTotal < 0) {
+            throw new IllegalArgumentException(
+                "DataTableResponse.recordsTotal must be >= 0, got: " + recordsTotal);
+        }
+        if (recordsFiltered < 0) {
+            throw new IllegalArgumentException(
+                "DataTableResponse.recordsFiltered must be >= 0, got: " + recordsFiltered);
+        }
+        // recordsFiltered > recordsTotal is clamped in of(), not thrown,
+        // because COUNT(*) vs COUNT(DISTINCT id) on a multi-join can hit this
+        // in a race condition — crashing the page would be worse than clamping.
     }
 }

@@ -269,12 +269,14 @@ function objectifyForm(form) {
  * Reset a form: native reset + clear hidden inputs + reset all select2.
  * @param {HTMLFormElement} form
  */
-function hsResetForm(form) {
-    form.reset();
-    form.querySelectorAll('input[type="hidden"]').forEach(el => el.value = '');
-    $(form).find('select').val('').trigger('change');
-}
 
+function hsResetForm(form) {
+    if (form) {
+        form.reset();
+        form.querySelectorAll('input[type="hidden"]').forEach(el => el.value = '');
+        $(form).find('select').val('').trigger('change');
+    }
+}
 /**
  * Disable a submit button and show a spinner.
  * @param {HTMLButtonElement} submitBtn
