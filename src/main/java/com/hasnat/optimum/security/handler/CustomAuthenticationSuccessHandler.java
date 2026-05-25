@@ -72,7 +72,7 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         if (principal.getDefaultDashboard() != null) {
             return switch (principal.getDefaultDashboard()) {
                 case PRODUCTION  -> "/production/dashboard";
-                case INVENTORY_WAREHOUSE   -> "/inventory/dashboard";
+                case INVENTORY   -> "/inventory/dashboard";
                 case COMMERCIAL  -> "/commercial/dashboard";
                 default          -> "/dashboard";
             };

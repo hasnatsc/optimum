@@ -2,44 +2,80 @@ package com.hasnat.optimum.security.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-@Entity @Table(name = "sec_roles")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+/**
+ * A role groups a MasterRole authority with a set of fine-grained permissions.
+ *
+ * One role = one MasterRole + N permissions.
+ * One user can have multiple roles (rare — usually just one).
+ */
+@Entity
+@Table(
+    name = "sec_roles",
+    uniqueConstraints = @UniqueConstraint(name = "uq_role_master", columnNames = "master_role")
+)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Role {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    /** Human-readable display name. e.g. "Super Administrator" */
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(length = 250) private String nameBn;
-    @Column(length = 255) private String description;
-
-    @Enumerated(EnumType.STRING) @Column(length = 50)
+    /**
+     * The single Spring Security ROLE_* authority this role represents.
+     * Stored as the enum name string in the DB column.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "master_role", nullable = false, unique = true, length = 50)
     private MasterRole masterRole;
 
-    @Column(nullable = false) private boolean active;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    /** Optional description shown in the role management UI. */
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "sec_role_permissions",
-        joinColumns = @JoinColumn(name = "role_id"),
-        inverseJoinColumns = @JoinColumn(name = "permission_id"))
     @Builder.Default
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
+
+    /**
+     * Fine-grained permissions assigned to this role.
+     * Fetched eagerly so Spring Security can build the authority list
+     * in a single transaction without N+1 issues.
+     */
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "sec_role_permissions",
+        joinColumns        = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
     private Set<Permission> permissions = new LinkedHashSet<>();
 
-    public enum MasterRole {
-        ROLE_SUPER_ADMIN, ROLE_HRM, ROLE_ECOMMERCE_ADMIN, ROLE_ACCOUNTS_ADMIN,
-        ROLE_SALES_MANAGER, ROLE_SALES_EXECUTIVE, ROLE_PURCHASE_MANAGER,
-        ROLE_PURCHASE_OFFICER, ROLE_INVENTORY_MANAGER, ROLE_WAREHOUSE_STAFF,
-        ROLE_ACCOUNTANT, ROLE_CUSTOMER_SUPPORT, ROLE_SUPPLIER,
-        ROLE_PRODUCTION_MANAGER, ROLE_PRODUCTION_SUPERVISOR, ROLE_QUALITY_INSPECTOR,
-        ROLE_COMMERCIAL_MANAGER, ROLE_EXPORT_OFFICER, ROLE_IMPORT_OFFICER,
-        ROLE_COMMERCIAL_EXECUTIVE, ROLE_BOND_OFFICER, ROLE_DOCUMENTATION_OFFICER
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

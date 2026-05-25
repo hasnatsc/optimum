@@ -1,41 +1,60 @@
 package com.hasnat.optimum.security.repository;
+
 import com.hasnat.optimum.security.entity.User;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import java.util.*;
-@Repository
-public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
-    Optional<User> findByUsername(String username);
-    Optional<User> findByEmail(String email);
-    Optional<User> findByPhone(String phone);
-    Optional<User> findByUsernameOrEmail(String username, String email);
-    List<User> findByOrganizationIdAndEnabledTrue(Long orgId);
-    List<User> findByOrganizationId(Long orgId);
-    boolean existsByUsername(String username);
-    boolean existsByEmail(String email);
-    boolean existsByPhone(String phone);
-    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.id = :roleId AND u.organization.id = :orgId")
-    List<User> findByOrganizationIdAndRoleId(@Param("orgId") Long orgId, @Param("roleId") Long roleId);
-    @Query("SELECT u FROM User u WHERE u.organization.id = :orgId " +
-           "AND (LOWER(u.fullName) LIKE LOWER(CONCAT('%',:q,'%')) " +
-           "OR LOWER(u.username) LIKE LOWER(CONCAT('%',:q,'%')) " +
-           "OR LOWER(u.email) LIKE LOWER(CONCAT('%',:q,'%')))")
-    List<User> search(@Param("orgId") Long orgId, @Param("q") String q);
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    // ── Login lookup (used by CustomUserDetailsService) ────────────────────────
 
     /**
-     * Single query — tries username, email, and phone in one shot.
-     * Spring generates the JPQL automatically from the method name.
+     * Multi-field login: accepts username OR email OR phone as the principal.
+     * Only active, non-deleted users are returned.
      */
-    Optional<User> findByUsernameOrEmailOrPhone(
-            String username, String email, String phone);
-
     @Query("""
-           SELECT u FROM User u
-           JOIN FETCH u.roles r
-           JOIN FETCH r.permissions
-           WHERE u.username = :username
-           """)
-    Optional<User> findWithRolesAndPermissions(String username);
+        SELECT u FROM User u
+        WHERE u.deleted = false
+          AND (u.username = :username
+               OR u.email = :email
+               OR u.phone = :phone)
+    """)
+    Optional<User> findByUsernameOrEmailOrPhone(
+        @Param("username") String username,
+        @Param("email")    String email,
+        @Param("phone")    String phone
+    );
+
+    // ── Password reset (used by PasswordResetServiceImpl) ─────────────────────
+
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.deleted = false")
+    Optional<User> findByEmail(@Param("email") String email);
+
+    // ── Existence checks (used by UserServiceImpl for validation) ──────────────
+
+    boolean existsByUsernameAndDeletedFalse(String username);
+
+    boolean existsByEmailAndDeletedFalse(String email);
+
+    boolean existsByUsernameAndIdNotAndDeletedFalse(String username, Long id);
+
+    boolean existsByEmailAndIdNotAndDeletedFalse(String email, Long id);
+
+    // ── Single user lookup (non-deleted only) ──────────────────────────────────
+
+    @Query("SELECT u FROM User u WHERE u.id = :id AND u.deleted = false")
+    Optional<User> findActiveById(@Param("id") Long id);
+
+    // ── Audit: record last login timestamp ────────────────────────────────────
+
+    @Modifying
+    @Query("UPDATE User u SET u.lastLoginAt = :ts WHERE u.id = :id")
+    void updateLastLogin(@Param("id") Long id, @Param("ts") LocalDateTime ts);
 }

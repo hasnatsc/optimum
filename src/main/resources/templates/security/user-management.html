@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Management</title>
+  <link rel="icon" type="image/png" href="/img/favicon.svg">
+  <meta name="_csrf"        content="">
+  <meta name="_csrf_header" content="X-CSRF-TOKEN">
+
+  <link href="/css/app.min.css"                              rel="stylesheet"/>
+  <link href="/css/vendor.min.css"                           rel="stylesheet"/>
+  <link href="/css/application.css"                          rel="stylesheet"/>
+  <link href="/css/dataTables/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+  <link href="/css/dataTables/responsive.bootstrap5.min.css" rel="stylesheet"/>
+  <link href="/css/plugins/select2.min.css"                  rel="stylesheet"/>
+
+  <script src="/js/app.min.js"></script>
+  <script src="/js/vendor.min.js"></script>
+  <script src="/js/dataTables/dataTables.min.js"></script>
+  <script src="/js/dataTables/dataTables.bootstrap5.min.js"></script>
+  <script src="/js/dataTables/dataTables.responsive.min.js"></script>
+  <script src="/js/dataTables/responsive.bootstrap5.min.js"></script>
+  <script src="/js/dataTables/table-manage-default.demo.js"></script>
+  <script src="/js/plugins/select2.min.js"></script>
+  <script src="/js/plugins/sweetalert.js"></script>
+  <script src="/js/plugins/parsley.min.js"></script>
+  <script src="/js/application.js"></script>
+</head>
+
+<body>
+<div id="loader" class="app-loader"><span class="spinner"></span></div>
+
+<div id="app" class="app app-header-fixed app-sidebar-fixed app-without-sidebar app-with-top-menu">
+
+  <!-- topMenuHeader + topMenu assembled here (same as other pages) -->
+  <div id="topMenuHeader" class="app-header"><!-- assembled from fragment --></div>
+  <div id="top-menu"      class="app-top-menu" data-bs-theme="dark"><!-- assembled from fragment --></div>
+
+  <div class="app-sidebar-mobile-backdrop">
+    <a href="#" data-dismiss="app-sidebar-mobile" class="stretched-link"></a>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       PAGE CONTENT
+       ═══════════════════════════════════════════════════ -->
+  <div id="content" class="app-content">
+
+    <ol class="breadcrumb float-xl-end">
+      <li class="breadcrumb-item"><a href="/dashboard">Home</a></li>
+      <li class="breadcrumb-item"><a href="#">Security</a></li>
+      <li class="breadcrumb-item active">User Management</li>
+    </ol>
+
+    <h1 class="page-header">
+      User Management <small>create, assign roles, and control access</small>
+    </h1>
+
+    <div class="panel panel-inverse">
+      <div class="panel-heading">
+        <div class="panel-title">
+          <a href="javascript:;" onclick="openCreateModal()">
+            <span class="badge btn btn-outline-success">
+              <i class="fa fa-plus me-1"></i> Create User
+            </span>
+          </a>
+        </div>
+        <div class="panel-heading-btn">
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-default" data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-success" data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-warning" data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+        </div>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Status Filter -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Status Filter</label>
+            <select id="statusFilter" class="form-select">
+              <option value="">All Users</option>
+              <option value="1">Active</option>
+              <option value="0">Disabled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DataTable
+             Columns mirror UserServiceImpl.buildActionButtons() row map keys:
+             sl, username, full_name, email, phone, roles, status, actions
+        -->
+        <table id="userTable" width="100%"
+               class="table table-striped table-bordered align-middle text-nowrap dataTable dtr-inline">
+          <thead>
+          <tr>
+            <th width="1%">SL</th>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Roles</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div><!-- /panel -->
+
+  </div><!-- /app-content -->
+
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL — CREATE / EDIT
+       ═══════════════════════════════════════════════════ -->
+  <div tabindex="-1" aria-hidden="true" id="userModal" class="modal fade">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="userModalLabel">
+            <i class="fa fa-user-gear text-success me-2"></i>User Form
+          </h5>
+          <button type="button" data-bs-dismiss="modal" class="btn-close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="hs-box">
+            <form id="userForm" data-parsley-validate="true">
+              <input type="hidden" id="userId">
+
+              <div class="row g-3">
+
+                <!-- ── Basic Info ──────────────────────────────────── -->
+                <div class="col-12">
+                  <h6 class="text-primary mb-0"><i class="fa fa-id-card me-1"></i>Basic Information</h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Username <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="uUsername"
+                         name="username" required
+                         data-parsley-required="true"
+                         data-parsley-minlength="3"
+                         placeholder="e.g. john.doe">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="uFullName"
+                         name="fullName" required data-parsley-required="true"
+                         placeholder="e.g. John Doe">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Email <span class="text-danger">*</span></label>
+                  <input type="email" class="form-control" id="uEmail"
+                         name="email" required data-parsley-required="true"
+                         data-parsley-type="email"
+                         placeholder="user@company.com">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Phone</label>
+                  <input type="text" class="form-control" id="uPhone"
+                         name="phone" placeholder="+880…">
+                </div>
+
+                <!-- ── Password section ────────────────────────────── -->
+                <div class="col-12">
+                  <h6 class="text-warning mb-0 mt-1">
+                    <i class="fa fa-lock me-1"></i>Password
+                    <small class="text-muted fw-normal" id="pwHint"> — required for new user</small>
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label" id="pwLabel">
+                    Password <span class="text-danger" id="pwRequired">*</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="uPassword"
+                           name="password" placeholder="Min 8 characters"
+                           data-parsley-minlength="8"
+                           data-parsley-minlength-message="Minimum 8 characters.">
+                    <button type="button" class="btn btn-outline-secondary" id="pwToggle1">
+                      <i class="fa fa-eye" id="pwIcon1"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Confirm Password <span class="text-danger" id="cpRequired">*</span></label>
+                  <div class="input-group">
+                    <input type="password" class="form-control" id="uConfirmPassword"
+                           placeholder="Repeat password"
+                           data-parsley-equalto="#uPassword"
+                           data-parsley-equalto-message="Passwords do not match.">
+                    <button type="button" class="btn btn-outline-secondary" id="pwToggle2">
+                      <i class="fa fa-eye" id="pwIcon2"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- ── Roles & Dashboard ───────────────────────────── -->
+                <div class="col-12">
+                  <h6 class="text-info mb-0 mt-1">
+                    <i class="fa fa-shield-halved me-1"></i>Roles &amp; Access
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-8">
+                  <label class="form-label">Assign Roles <span class="text-danger">*</span></label>
+                  <select class="form-select" id="uRoleIds" name="roleIds"
+                          multiple required data-parsley-required="true"
+                          data-parsley-errors-container="#roleError">
+                  </select>
+                  <div id="roleError"></div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Default Dashboard</label>
+                  <select class="form-select" id="uDefaultDashboard" name="defaultDashboard">
+                    <option value="DEFAULT">Default</option>
+                    <option value="PRODUCTION">Production</option>
+                    <option value="INVENTORY">Inventory</option>
+                    <option value="COMMERCIAL">Commercial</option>
+                    <option value="HR">HR</option>
+                    <option value="FINANCE">Finance</option>
+                  </select>
+                </div>
+
+                <!-- ── Account flags ───────────────────────────────── -->
+                <div class="col-12">
+                  <h6 class="text-secondary mb-0 mt-1">
+                    <i class="fa fa-sliders me-1"></i>Account Flags
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-12 d-flex flex-wrap gap-4">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="uEnabled"
+                           name="enabled" checked>
+                    <label class="form-check-label fw-semibold" for="uEnabled">Enabled</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="uAccountNonLocked"
+                           name="accountNonLocked" checked>
+                    <label class="form-check-label fw-semibold" for="uAccountNonLocked">Account Non-Locked</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="uAccountNonExpired"
+                           name="accountNonExpired" checked>
+                    <label class="form-check-label fw-semibold" for="uAccountNonExpired">Account Non-Expired</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="uCredNonExpired"
+                           name="credentialsNonExpired" checked>
+                    <label class="form-check-label fw-semibold" for="uCredNonExpired">Credentials Non-Expired</label>
+                  </div>
+                </div>
+
+              </div><!-- /row -->
+            </form>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" data-bs-dismiss="modal" class="btn btn-white">Close</button>
+          <button type="submit" form="userForm" id="userSubmitBtn" class="btn btn-success">
+            <span id="userSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+            <span id="userBtnText">Save</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /userModal -->
+
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL — VIEW
+       ═══════════════════════════════════════════════════ -->
+  <div tabindex="-1" aria-hidden="true" id="userModalShow" class="modal fade">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fa fa-user text-success me-2"></i>User Details
+          </h5>
+          <button type="button" data-bs-dismiss="modal" class="btn-close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="hs-box">
+            <div class="row g-3">
+
+              <!-- Status banner -->
+              <div class="col-12">
+                <div class="alert alert-info text-center mb-0 py-2">
+                  <strong id="sv_username">—</strong>
+                  <span id="sv_statusBadge" class="badge ms-2">—</span>
+                </div>
+              </div>
+
+              <!-- Identity -->
+              <div class="col-12">
+                <h6 class="text-primary mb-0"><i class="fa fa-id-card me-1"></i>Identity</h6>
+                <hr class="mt-1 mb-0">
+              </div>
+
+              <div class="col-md-4 view-group">
+                <label class="view-label">Full Name</label>
+                <span id="sv_fullName" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-4 view-group">
+                <label class="view-label">Email</label>
+                <span id="sv_email" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-4 view-group">
+                <label class="view-label">Phone</label>
+                <span id="sv_phone" class="form-control hs_span_show"></span>
+              </div>
+
+              <!-- Roles & Dashboard -->
+              <div class="col-12">
+                <h6 class="text-info mb-0 mt-1"><i class="fa fa-shield-halved me-1"></i>Roles &amp; Access</h6>
+                <hr class="mt-1 mb-0">
+              </div>
+
+              <div class="col-md-8 view-group">
+                <label class="view-label">Assigned Roles</label>
+                <span id="sv_roles" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-4 view-group">
+                <label class="view-label">Default Dashboard</label>
+                <span id="sv_dashboard" class="form-control hs_span_show"></span>
+              </div>
+
+              <!-- Account flags -->
+              <div class="col-12">
+                <h6 class="text-secondary mb-0 mt-1"><i class="fa fa-sliders me-1"></i>Account Flags</h6>
+                <hr class="mt-1 mb-0">
+              </div>
+
+              <div class="col-12 d-flex flex-wrap gap-3">
+                <span id="sv_enabled"          class="badge fs-12px"></span>
+                <span id="sv_locked"            class="badge fs-12px"></span>
+                <span id="sv_accountExpired"    class="badge fs-12px"></span>
+                <span id="sv_credExpired"       class="badge fs-12px"></span>
+              </div>
+
+              <!-- Audit -->
+              <div class="col-12 mt-2">
+                <hr class="mb-2">
+                <small class="text-muted">
+                  Last Login: <strong id="sv_lastLogin"></strong>
+                  &nbsp;|&nbsp;
+                  Created by: <strong id="sv_createdBy"></strong>
+                  &nbsp;at: <span id="sv_createdAt"></span>
+                  &nbsp;&nbsp;
+                  Updated by: <strong id="sv_updatedBy"></strong>
+                  &nbsp;at: <span id="sv_updatedAt"></span>
+                </small>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" data-bs-dismiss="modal" class="btn btn-white">Close</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /userModalShow -->
+
+</div><!-- /app -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     CONSOLIDATED SCRIPTS
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+
+/* ─────────────────────────────────────────────────────────
+   1.  DATATABLE
+   Columns mirror UserServiceImpl.datatableList() row map keys.
+   ───────────────────────────────────────────────────────── */
+let userDT;
+
+document.addEventListener('DOMContentLoaded', function () {
+    userDT = $('#userTable').DataTable({
+        processing: true,
+        responsive: true,
+        serverSide: true,
+        ajax: {
+            url:  '/users/list',
+            type: 'GET',
+            data: function (d) {
+                d.statusFilter = document.getElementById('statusFilter').value;
+            }
+        },
+        columns: [
+            { data: 'sl',        orderable: false, width: '3%' },
+            { data: 'username'                                  },
+            { data: 'full_name'                                 },
+            { data: 'email'                                     },
+            { data: 'phone'                                     },
+            { data: 'roles',     orderable: false               },
+            { data: 'status',    orderable: false               },
+            { data: 'actions',   orderable: false               }
+        ]
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', () =>
+        userDT.ajax.reload()
+    );
+
+    // Attach parsley + form submit
+    initUserForm();
+
+    // Init password toggles
+    initPwToggles();
+
+    // Init roles select2
+    initRolesSelect2();
+});
+
+
+/* ─────────────────────────────────────────────────────────
+   2.  SELECT2 — role multi-select
+   ───────────────────────────────────────────────────────── */
+function initRolesSelect2(preselect) {
+    const $sel = $('#uRoleIds');
+    if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+
+    $sel.select2({
+        dropdownParent:     $('#userModal'),
+        width:              '100%',
+        placeholder:        '— Search and select roles —',
+        allowClear:         true,
+        minimumInputLength: 0,
+        ajax: {
+            url:      '/users/roles/search',
+            dataType: 'json',
+            delay:    200,
+            data:     params => ({ search: params.term || '' }),
+            processResults: data => ({
+                results: data.map(r => ({ id: r.id, text: r.text }))
+            }),
+            cache: true
+        },
+        templateResult: function (repo) {
+            if (repo.loading) return repo.text;
+            return $(`<div><strong>${repo.text}</strong></div>`);
+        },
+        templateSelection: repo => repo.text || repo.id
+    });
+
+    // Edit mode — preselect existing roles
+    if (preselect && Array.isArray(preselect.roleIds) && preselect.roleIds.length) {
+        const names  = (preselect.roleNames || '').split(', ');
+        const ids    = preselect.roleIds;
+        ids.forEach((id, i) => {
+            $sel.append(new Option(names[i] || id, id, true, true));
+        });
+        $sel.trigger('change');
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   3.  FORM INIT + PARSLEY HOOKS + SUBMIT
+   ───────────────────────────────────────────────────────── */
+function initUserForm() {
+    const form      = document.getElementById('userForm');
+    const submitBtn = document.getElementById('userSubmitBtn');
+    const spinner   = document.getElementById('userSpinner');
+    const btnText   = document.getElementById('userBtnText');
+
+    window.Parsley.on('field:error',   function () { this.$element.addClass('is-invalid'); });
+    window.Parsley.on('field:success', function () { this.$element.removeClass('is-invalid'); });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!$(form).parsley().isValid()) return;
+
+        const isEdit   = !!document.getElementById('userId').value;
+        const pwValue  = document.getElementById('uPassword').value.trim();
+
+        // For new users, password is mandatory
+        if (!isEdit && !pwValue) {
+            Swal.fire('Validation', 'Password is required for new users.', 'warning');
+            return;
+        }
+
+        const roleIds = $('#uRoleIds').val();
+        if (!roleIds || roleIds.length === 0) {
+            Swal.fire('Validation', 'Please assign at least one role.', 'warning');
+            return;
+        }
+
+        hsDisableButton(submitBtn, spinner, btnText);
+
+        const payload = {
+            id:                    document.getElementById('userId').value || null,
+            username:              document.getElementById('uUsername').value.trim(),
+            fullName:              document.getElementById('uFullName').value.trim(),
+            email:                 document.getElementById('uEmail').value.trim(),
+            phone:                 document.getElementById('uPhone').value.trim() || null,
+            password:              pwValue || null,
+            enabled:               document.getElementById('uEnabled').checked,
+            accountNonLocked:      document.getElementById('uAccountNonLocked').checked,
+            accountNonExpired:     document.getElementById('uAccountNonExpired').checked,
+            credentialsNonExpired: document.getElementById('uCredNonExpired').checked,
+            defaultDashboard:      document.getElementById('uDefaultDashboard').value,
+            roleIds:               roleIds.map(Number)
+        };
+
+        secureFetch('/users/save', { method: 'POST', body: JSON.stringify(payload) })
+            .then(data => {
+                hsEnableButton(submitBtn, spinner, btnText);
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved!', text: data.message,
+                                timer: 2000, showConfirmButton: false });
+                    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+                    userDT.ajax.reload();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error!', text: data.message });
+                }
+            })
+            .catch(err => {
+                hsEnableButton(submitBtn, spinner, btnText);
+                Swal.fire({ icon: 'error', title: 'Error!', text: err.message });
+            });
+    });
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   4.  FORM RESET
+   ───────────────────────────────────────────────────────── */
+function resetUserForm() {
+    document.getElementById('userForm').reset();
+    document.getElementById('userId').value = '';
+    const $r = $('#uRoleIds');
+    if ($r.hasClass('select2-hidden-accessible')) $r.val(null).trigger('change');
+    // Reset all checkboxes to default ON
+    ['uEnabled','uAccountNonLocked','uAccountNonExpired','uCredNonExpired']
+        .forEach(id => document.getElementById(id).checked = true);
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   5.  OPEN CREATE MODAL
+   ───────────────────────────────────────────────────────── */
+function openCreateModal() {
+    resetUserForm();
+    document.getElementById('userModalLabel').innerHTML =
+        '<i class="fa fa-user-plus text-success me-2"></i>Create User';
+
+    // Password is required for new users
+    document.getElementById('uPassword').setAttribute('required', '');
+    document.getElementById('uPassword').setAttribute('data-parsley-required', 'true');
+    document.getElementById('uConfirmPassword').setAttribute('required', '');
+    document.getElementById('pwHint').textContent  = ' — required for new user';
+    document.getElementById('pwRequired').style.display = 'inline';
+    document.getElementById('cpRequired').style.display = 'inline';
+
+    initRolesSelect2(null);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   6.  EDIT  (action button handler — name called from Java)
+   ───────────────────────────────────────────────────────── */
+function dataEdit(id) {
+    secureFetch('/users/show/' + id).then(data => {
+        if (!data.success) { Swal.fire('Error', data.message, 'error'); return; }
+        const u = data.obj.defaultData;
+
+        resetUserForm();
+        document.getElementById('userModalLabel').innerHTML =
+            '<i class="fa fa-pen-to-square text-warning me-2"></i>Edit User';
+
+        document.getElementById('userId').value   = u.id;
+        document.getElementById('uUsername').value = u.username;
+        document.getElementById('uFullName').value = u.fullName;
+        document.getElementById('uEmail').value    = u.email;
+        document.getElementById('uPhone').value    = u.phone || '';
+        document.getElementById('uDefaultDashboard').value = u.defaultDashboard || 'DEFAULT';
+        document.getElementById('uEnabled').checked           = u.enabled;
+        document.getElementById('uAccountNonLocked').checked  = u.accountNonLocked;
+        document.getElementById('uAccountNonExpired').checked = u.accountNonExpired;
+        document.getElementById('uCredNonExpired').checked    = u.credentialsNonExpired;
+
+        // Password optional on edit
+        document.getElementById('uPassword').removeAttribute('required');
+        document.getElementById('uPassword').removeAttribute('data-parsley-required');
+        document.getElementById('uConfirmPassword').removeAttribute('required');
+        document.getElementById('pwHint').textContent   = ' — leave blank to keep current';
+        document.getElementById('pwRequired').style.display = 'none';
+        document.getElementById('cpRequired').style.display = 'none';
+
+        // Preselect roles
+        initRolesSelect2({ roleIds: u.roleIds, roleNames: u.roleNames });
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
+    });
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   7.  VIEW (action button handler — name called from Java)
+   ───────────────────────────────────────────────────────── */
+function dataShow(id) {
+    secureFetch('/users/show/' + id).then(data => {
+        if (!data.success) { Swal.fire('Error', data.message, 'error'); return; }
+        populateViewModal(data.obj.defaultData);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('userModalShow')).show();
+    });
+}
+
+function populateViewModal(u) {
+    hsSetText('sv_username', u.username);
+
+    const statusBadge = document.getElementById('sv_statusBadge');
+    if (u.enabled) {
+        statusBadge.textContent  = 'Active';
+        statusBadge.className    = 'badge bg-success ms-2';
+    } else {
+        statusBadge.textContent  = 'Disabled';
+        statusBadge.className    = 'badge bg-secondary ms-2';
+    }
+
+    hsSetText('sv_fullName',  u.fullName  || '—');
+    hsSetText('sv_email',     u.email     || '—');
+    hsSetText('sv_phone',     u.phone     || '—');
+    hsSetText('sv_roles',     u.roleNames || 'No Role');
+    hsSetText('sv_dashboard', u.defaultDashboard || 'DEFAULT');
+    hsSetText('sv_lastLogin', u.lastLoginAt      || 'Never');
+    hsSetText('sv_createdBy', u.createdBy        || '—');
+    hsSetText('sv_createdAt', u.createdAt        || '—');
+    hsSetText('sv_updatedBy', u.updatedBy        || '—');
+    hsSetText('sv_updatedAt', u.updatedAt        || '—');
+
+    // Account flag badges
+    flagBadge('sv_enabled',         u.enabled,                'Enabled',                  'Disabled');
+    flagBadge('sv_locked',          u.accountNonLocked,       'Account Unlocked',         'Account Locked',       true);
+    flagBadge('sv_accountExpired',  u.accountNonExpired,      'Account Valid',            'Account Expired',      true);
+    flagBadge('sv_credExpired',     u.credentialsNonExpired,  'Credentials Valid',        'Credentials Expired',  true);
+}
+
+function flagBadge(id, condition, trueLabel, falseLabel, invertColor) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const good = invertColor ? condition : condition;
+    el.textContent = condition ? trueLabel : falseLabel;
+    el.className   = 'badge fs-12px ' + (condition ? 'bg-success' : 'bg-danger');
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   8.  DELETE (action button handler — name called from Java)
+   ───────────────────────────────────────────────────────── */
+function dataDelete(id) {
+    confirmAndExecute({
+        title:        'Delete User?',
+        text:         'This will soft-delete the user. The last Super Admin cannot be deleted.',
+        icon:         'warning',
+        confirmText:  'Yes, delete!',
+        confirmColor: '#d33',
+        url:          `/users/delete/${id}`,
+        method:       'DELETE',
+        successTitle: 'Deleted!',
+        reloadTable:  true,
+        dataTable:    userDT
+    });
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   9.  TOGGLE STATUS (action button handler — name called from Java)
+   ───────────────────────────────────────────────────────── */
+function dataToggle(id) {
+    hsChangeStatus('/users/toggle-status/' + id, userDT, 'User');
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   10. CHANGE PASSWORD (action button handler — name called from Java)
+   ───────────────────────────────────────────────────────── */
+function dataPwd(id) {
+    Swal.fire({
+        title: 'Set New Password',
+        html: `
+            <div style="text-align:left; margin-top:10px;">
+                <div class="mb-3 position-relative">
+                    <input type="password" id="newPwd1" class="swal2-input"
+                           placeholder="New password (min 8 chars)" style="width:90%">
+                    <i class="fa fa-eye position-absolute" id="e1"
+                       style="right:20px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;"
+                       onclick="toggleSwalPw('newPwd1','e1')"></i>
+                </div>
+                <div class="mb-1 position-relative">
+                    <input type="password" id="newPwd2" class="swal2-input"
+                           placeholder="Confirm password" style="width:90%">
+                    <i class="fa fa-eye position-absolute" id="e2"
+                       style="right:20px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;"
+                       onclick="toggleSwalPw('newPwd2','e2')"></i>
+                </div>
+            </div>`,
+        showCancelButton:   true,
+        confirmButtonColor: '#17a2b8',
+        confirmButtonText:  'Update Password',
+        focusConfirm: false,
+        preConfirm: () => {
+            const p1 = document.getElementById('newPwd1').value;
+            const p2 = document.getElementById('newPwd2').value;
+            if (!p1) {
+                Swal.showValidationMessage('Password is required.');
+                return false;
+            }
+            if (p1.length < 8) {
+                Swal.showValidationMessage('Password must be at least 8 characters.');
+                return false;
+            }
+            if (p1 !== p2) {
+                Swal.showValidationMessage('Passwords do not match.');
+                return false;
+            }
+            return p1;
+        }
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        secureFetch(`/users/change-password/${id}`, {
+            method: 'POST',
+            body:   JSON.stringify({ password: result.value })
+        })
+        .then(data => {
+            if (data.success) {
+                Swal.fire({ icon: 'success', title: 'Done!', text: data.message,
+                            timer: 2000, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error!', text: data.message });
+            }
+        });
+    });
+}
+
+function toggleSwalPw(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    const show  = input.type === 'password';
+    input.type     = show ? 'text' : 'password';
+    icon.className = (show ? 'fa fa-eye-slash' : 'fa fa-eye') +
+                     ' position-absolute';
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   11. PASSWORD SHOW/HIDE toggles in the form modal
+   ───────────────────────────────────────────────────────── */
+function initPwToggles() {
+    document.getElementById('pwToggle1').addEventListener('click', () => {
+        const inp  = document.getElementById('uPassword');
+        const icon = document.getElementById('pwIcon1');
+        const show = inp.type === 'password';
+        inp.type       = show ? 'text' : 'password';
+        icon.className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
+    });
+    document.getElementById('pwToggle2').addEventListener('click', () => {
+        const inp  = document.getElementById('uConfirmPassword');
+        const icon = document.getElementById('pwIcon2');
+        const show = inp.type === 'password';
+        inp.type       = show ? 'text' : 'password';
+        icon.className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
+    });
+}
+
+</script>
+
+</body>
+</html>

@@ -1,59 +1,144 @@
 package com.hasnat.optimum.security.entity;
 
-import com.hasnat.optimum.organization.entity.Organization;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-@Entity @Table(name = "sec_users")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+/**
+ * Application user entity.
+ *
+ * Table: sec_users
+ *
+ * UserDetails flags are stored as individual columns so they can be
+ * toggled independently without reissuing credentials.
+ *
+ * Soft-delete: set deleted = true; never physically remove rows.
+ */
+@Entity
+@Table(
+    name = "sec_users",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uq_user_username", columnNames = "username"),
+        @UniqueConstraint(name = "uq_user_email",    columnNames = "email")
+    }
+)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    // ── Identity ──────────────────────────────────────────────────────────────
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    /** Login identifier — also accepted as the "username" by Spring Security. */
+    @Column(nullable = false, unique = true, length = 80)
     private String username;
 
-    @Column(nullable = false, unique = true, length = 100)
+    /** Used for login and for password-reset emails. Must be unique. */
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    @Column(nullable = false, unique = true, length = 20)
+    /** Optional phone — accepted as alternative login principal. */
+    @Column(length = 30)
     private String phone;
 
-    @Column(nullable = false, length = 255)
+    /** Display name shown in the UI navbar. */
+    @Column(name = "full_name", length = 200)
+    private String fullName;
+
+    /** BCrypt-encoded password. Never store plain text. */
+    @Column(nullable = false)
     private String password;
 
-    @Column(length = 100) private String fullName;
+    // ── UserDetails flags ─────────────────────────────────────────────────────
 
-    @Column(nullable = false) private boolean enabled;
-    @Column(nullable = false) private boolean accountNonExpired;
-    @Column(nullable = false) private boolean accountNonLocked;
-    @Column(nullable = false) private boolean credentialsNonExpired;
+    @Builder.Default
+    @Column(name = "is_enabled", nullable = false)
+    private boolean enabled = true;
 
-    private LocalDateTime lastLoginAt;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @Builder.Default
+    @Column(name = "is_account_non_expired", nullable = false)
+    private boolean accountNonExpired = true;
 
-    @Enumerated(EnumType.STRING) @Column(length = 35)
+    @Builder.Default
+    @Column(name = "is_account_non_locked", nullable = false)
+    private boolean accountNonLocked = true;
+
+    @Builder.Default
+    @Column(name = "is_credentials_non_expired", nullable = false)
+    private boolean credentialsNonExpired = true;
+
+    // ── Preferences ───────────────────────────────────────────────────────────
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_dashboard", length = 30)
     private DefaultDashboard defaultDashboard;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "organization_id", nullable = false)
-    private Organization organization;
+    // ── Roles ─────────────────────────────────────────────────────────────────
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "sec_user_roles",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id"))
+    /**
+     * EAGER fetch is intentional — Spring Security builds the authority list
+     * on every request; lazy loading would require an open session.
+     * Keep role count low (typically 1 per user).
+     */
     @Builder.Default
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "sec_user_roles",
+        joinColumns        = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private Set<Role> roles = new LinkedHashSet<>();
 
+    // ── Soft-delete ───────────────────────────────────────────────────────────
+
+    @Builder.Default
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted = false;
+
+    // ── Audit ─────────────────────────────────────────────────────────────────
+
+    @Column(name = "created_by",  length = 100)
+    private String createdBy;
+
+    @Column(name = "updated_by",  length = 100)
+    private String updatedBy;
+
+    @Column(name = "created_at",  updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // ── Default dashboard enum ────────────────────────────────────────────────
+
     public enum DefaultDashboard {
-        CORE_SECURITY, ACCESS_MENU, HRM, SALES_CUSTOMER_OPERATIONS, PURCHASE_SUPPLIER,
-        INVENTORY_WAREHOUSE, FINANCE_ACCOUNTS, PRODUCTION, PRODUCT_CATALOG_ECOMMERCE,
-        POS, CRM, COMMUNICATION_NOTIFICATION, COMMERCIAL, REPORTS_ANALYTICS
+        DEFAULT,
+        PRODUCTION,
+        INVENTORY,
+        COMMERCIAL,
+        HR,
+        FINANCE
     }
 }
