@@ -1,5 +1,6 @@
 package com.hasnat.optimum.security.initializer;
 
+import com.hasnat.optimum.security.entity.Module;
 import com.hasnat.optimum.security.entity.*;
 import com.hasnat.optimum.security.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -148,7 +149,7 @@ public class SecurityDataInitializer implements ApplicationRunner {
                 Permission p = Permission.builder()
                     .name(name)
                     .description(description)
-                    .module(module)
+                    .module(Module.valueOf(module))
                     .build();
                 return permissionRepository.save(p);
             });

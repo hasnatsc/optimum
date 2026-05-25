@@ -3,25 +3,38 @@ package com.hasnat.optimum.security.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * Navigation menu item.
+ * Single unified navigation menu entity.
  *
- * Tree structure is stored as an adjacency list (parentId column).
- * The JS buildMenuTree() function reconstructs the hierarchy client-side
- * from the flat list returned by /openApi/menus/user-menu.
+ * Replaces BOTH the old {@code Menu} (sec_menus) and the old {@code AppMenu}:
  *
- * Three-level hierarchy:
- *   MODULE  → top-level tab (icon, no URL)
- *     GROUP   → non-clickable flyout header (no URL)
- *       LEAF  → clickable link (URL, requiredPermission)
+ *  From old Menu     → menuCode, description, visible (was isVisible), moduleName
+ *  From old AppMenu  → parentId (Long flat), menuType, deleted, createdBy/updatedBy
+ *
+ *  DROPPED from old Menu:
+ *    • @ManyToOne parentMenu  — caused N+1 on every tree load.
+ *                               Replaced by plain Long parentId.
+ *    • Module enum            — external dep (com.hasnat.optimum.security.entity.Module).
+ *                               Replaced by String moduleName.
+ *
+ * Tree is loaded in ONE query; JS buildMenuTree() reconstructs the hierarchy
+ * from the flat parentId adjacency list.
+ *
+ * Visibility rules (all must be true for a menu item to appear):
+ *   active  = true  (admin toggle)
+ *   visible = true  (explicit show/hide without deactivating)
+ *   deleted = false (soft-delete)
+ *   + permission check via RoleMenuAccess.canView OR requiredPermission
  *
  * Table: app_menus
  */
 @Entity
 @Table(
     name = "app_menus",
+    uniqueConstraints = @UniqueConstraint(name = "uq_app_menu_code", columnNames = "menu_code"),
     indexes = {
         @Index(name = "idx_menu_parent",  columnList = "parent_id"),
         @Index(name = "idx_menu_order",   columnList = "display_order"),
@@ -33,90 +46,122 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AppMenu {
+public class AppMenu implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ── Display ───────────────────────────────────────────────────────────
+    // ── Identity ──────────────────────────────────────────────────────────────
+
+    /**
+     * Short stable code for programmatic lookup (from old Menu.menuCode).
+     * Survives renames — use this in code that must find a specific menu.
+     * e.g. "PROD_ORDERS", "INV_ITEMS", "SEC_USERS"
+     */
+    @Column(name = "menu_code", nullable = false, unique = true, length = 80)
+    private String menuCode;
 
     @Column(nullable = false, length = 120)
     private String menuName;
 
+    /** Optional human-readable description (from old Menu.description). */
+    @Column(length = 255)
+    private String description;
+
+    // ── Display ───────────────────────────────────────────────────────────────
+
     /**
-     * Font-Awesome class string for MODULE-level icons.
-     * e.g. "fa fa-industry"  "fa fa-boxes-stacked"
-     * Null / blank for GROUP and LEAF items.
+     * Font-Awesome icon class — required for MODULE items.
+     * e.g. "fa fa-industry", "fa fa-boxes-stacked"
+     * Leave null for GROUP and LEAF.
      */
     @Column(length = 100)
     private String icon;
 
     /**
-     * URL path for LEAF items — must start with '/'.
-     * Null for MODULE and GROUP.
+     * Navigation URL — required for LEAF items, null for MODULE/GROUP.
+     * Must start with '/'.
      */
-    @Column(length = 300)
+    @Column(name = "menu_url", length = 300)
     private String menuUrl;
 
-    /**
-     * Link target attribute.  Default "_self".
-     */
+    /** HTML link target. Default "_self". */
     @Builder.Default
     @Column(length = 20)
     private String target = "_self";
 
-    // ── Hierarchy ─────────────────────────────────────────────────────────
+    // ── Hierarchy ─────────────────────────────────────────────────────────────
 
     /**
-     * Parent menu id.
-     * NULL  → top-level MODULE item.
-     * Non-null → child of that parent (GROUP or LEAF).
+     * Parent menu ID (flat adjacency list).
+     * null  → top-level MODULE.
+     * Non-null → GROUP or LEAF child.
      *
-     * Stored as a plain Long (not @ManyToOne) to avoid N+1 queries
-     * when loading the full menu tree in one query.
+     * Plain Long — NOT @ManyToOne — so the entire tree is one SELECT.
      */
     @Column(name = "parent_id")
     private Long parentId;
 
     /**
-     * Menu type — used for validation and admin UI rendering.
-     * The JS renderer infers type from position in the tree, so this
-     * field is optional for the client but useful for the backend.
+     * Hierarchy level — drives rendering and validation rules.
+     *   MODULE → top tab (icon, no URL, has children)
+     *   GROUP  → flyout section header (no URL, has LEAF children)
+     *   LEAF   → clickable link (URL, no children)
      */
     @Enumerated(EnumType.STRING)
     @Builder.Default
     @Column(name = "menu_type", length = 20, nullable = false)
     private MenuType menuType = MenuType.LEAF;
 
-    /** Sort order within the same parent level. Lower = first. */
+    /** Sort order within the same parent. Lower = first. */
     @Builder.Default
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder = 0;
 
-    // ── Permission ────────────────────────────────────────────────────────
+    /**
+     * Application module grouping (replaces old Module enum).
+     * e.g. "PRODUCTION", "INVENTORY", "COMMERCIAL"
+     * Optional — used only for grouping in the admin UI.
+     */
+    @Column(name = "module_name", length = 80)
+    private String moduleName;
+
+    // ── Permission (fallback filter) ──────────────────────────────────────────
 
     /**
-     * Spring Security authority required to see this item.
-     * e.g. "PERM_PRODUCTION_ORDER_VIEW"
+     * Spring Security authority required to show this item when RoleMenuAccess
+     * is NOT configured for the user's role (permission-fallback path).
      *
-     * NULL or blank → visible to ALL authenticated users.
-     * SUPER_ADMIN always sees every item regardless of this field.
+     * null/blank → visible to ALL authenticated users.
+     * SUPER_ADMIN bypasses this field entirely.
      */
     @Column(name = "required_permission", length = 120)
     private String requiredPermission;
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
+    /**
+     * Explicit show/hide flag (from old Menu.isVisible).
+     * Use to temporarily hide an item without deactivating it.
+     */
+    @Builder.Default
+    @Column(name = "visible", nullable = false)
+    private boolean visible = true;
+
+    /** Admin on/off toggle. Inactive items are hidden from all users. */
     @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Soft-delete — never physically remove rows. */
     @Builder.Default
     @Column(nullable = false)
     private boolean deleted = false;
 
-    // ── Audit ─────────────────────────────────────────────────────────────
+    // ── Audit ─────────────────────────────────────────────────────────────────
 
     @Column(name = "created_by", length = 100)
     private String createdBy;
@@ -136,14 +181,14 @@ public class AppMenu {
     @PreUpdate
     protected void onUpdate() { updatedAt = LocalDateTime.now(); }
 
-    // ── Enum ──────────────────────────────────────────────────────────────
+    // ── Enum ──────────────────────────────────────────────────────────────────
 
     public enum MenuType {
-        /** Top-level tab — has icon, no URL, has GROUP/LEAF children. */
+        /** Top-level tab — icon required, no URL, has GROUP/LEAF children. */
         MODULE,
-        /** Non-clickable section header — no URL, has LEAF children. */
+        /** Non-clickable flyout header — no URL, has LEAF children. */
         GROUP,
-        /** Clickable navigation link — has URL, no children. */
+        /** Clickable navigation link — URL required, no children. */
         LEAF
     }
 }

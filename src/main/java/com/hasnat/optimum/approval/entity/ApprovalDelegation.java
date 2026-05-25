@@ -2,7 +2,7 @@ package com.hasnat.optimum.approval.entity;
 
 import com.hasnat.optimum.common.entity.BaseEntity;
 import com.hasnat.optimum.common.enums.*;
-import com.hasnat.optimum.common.enums.Module;
+import com.hasnat.optimum.security.entity.Module;
 import com.hasnat.optimum.organization.entity.Organization;
 import com.hasnat.optimum.security.entity.User;
 import jakarta.persistence.*;

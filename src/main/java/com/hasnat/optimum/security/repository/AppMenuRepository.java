@@ -9,15 +9,22 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository for the merged AppMenu entity (replaces both old MenuRepository
+ * and the previous AppMenuRepository that referenced the old package).
+ *
+ * Package: com.hasnat.optimum.security.repository
+ * Entity:  com.hasnat.optimum.security.entity.AppMenu
+ * Table:   app_menus
+ */
 @Repository
 public interface AppMenuRepository extends JpaRepository<AppMenu, Long> {
 
-    // ── User-menu query (performance-critical) ────────────────────────────
+    // ── User-menu query (hot path — called on every page load) ────────────────
 
     /**
-     * Load every active, non-deleted menu in display order.
-     * One query — no joins.  Permission filtering is done in Java
-     * to avoid a complex SQL predicate that varies per user.
+     * All active, visible, non-deleted menus in display order.
+     * One SELECT, no joins. Permission filtering happens in Java.
      */
     @Query("""
         SELECT m FROM AppMenu m
@@ -27,9 +34,9 @@ public interface AppMenuRepository extends JpaRepository<AppMenu, Long> {
     """)
     List<AppMenu> findAllActiveOrdered();
 
-    // ── Admin CRUD ────────────────────────────────────────────────────────
+    // ── Admin CRUD ────────────────────────────────────────────────────────────
 
-    /** All non-deleted menus (including inactive) for the admin DataTable. */
+    /** All non-deleted menus (incl. inactive) for the admin DataTable. */
     @Query("""
         SELECT m FROM AppMenu m
         WHERE m.deleted = false
@@ -38,7 +45,7 @@ public interface AppMenuRepository extends JpaRepository<AppMenu, Long> {
     List<AppMenu> findAllNotDeleted();
 
     /**
-     * Active non-deleted menus for the parent-selector dropdown.
+     * Active parent candidates for the parent-picker dropdown.
      * Only MODULE and GROUP can be parents.
      */
     @Query("""
@@ -53,37 +60,50 @@ public interface AppMenuRepository extends JpaRepository<AppMenu, Long> {
     """)
     List<AppMenu> findActiveParentCandidates();
 
-    /** Direct children of a given parent — used when deleting a parent. */
+    /** Direct children — used when cascading soft-deletes. */
     List<AppMenu> findByParentIdAndDeletedFalse(Long parentId);
 
-    /** Check if a menu name already exists at the same level. */
+    // ── Uniqueness checks ─────────────────────────────────────────────────────
+
+    Optional<AppMenu> findByMenuCode(String menuCode);
+
+    boolean existsByMenuCode(String menuCode);
+
+    boolean existsByMenuCodeAndIdNot(String menuCode, Long id);
+
     boolean existsByMenuNameAndParentIdAndDeletedFalse(String menuName, Long parentId);
 
     boolean existsByMenuNameAndParentIdAndIdNotAndDeletedFalse(
             String menuName, Long parentId, Long id);
 
-    /** Max displayOrder among siblings — used to append a new item at the end. */
+    // ── Display order ─────────────────────────────────────────────────────────
+
+    /**
+     * Max displayOrder for siblings — used to append a new item at the end.
+     * The :parentId param is null for top-level items.
+     */
     @Query("""
         SELECT COALESCE(MAX(m.displayOrder), 0)
         FROM AppMenu m
-        WHERE m.deleted  = false
+        WHERE m.deleted = false
           AND ((:parentId IS NULL AND m.parentId IS NULL)
                OR m.parentId = :parentId)
     """)
     int findMaxDisplayOrderByParentId(@Param("parentId") Long parentId);
 
-    /** Find non-deleted by id. */
+    // ── Single-record lookups ─────────────────────────────────────────────────
+
     Optional<AppMenu> findByIdAndDeletedFalse(Long id);
 
-    /**
-     * Search for Select2 AJAX — used when picking a menu item in other forms.
-     */
+    // ── Select2 AJAX search ───────────────────────────────────────────────────
+
     @Query("""
         SELECT m FROM AppMenu m
         WHERE m.active  = true
           AND m.deleted = false
           AND (:search IS NULL OR :search = ''
-               OR LOWER(m.menuName) LIKE LOWER(CONCAT('%', :search, '%')))
+               OR LOWER(m.menuName) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(m.menuUrl) LIKE LOWER(CONCAT('%', :search, '%')))
         ORDER BY m.displayOrder ASC, m.menuName ASC
     """)
     List<AppMenu> searchMenus(@Param("search") String search);

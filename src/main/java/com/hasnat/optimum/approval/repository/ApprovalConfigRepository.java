@@ -1,7 +1,7 @@
 package com.hasnat.optimum.approval.repository;
 import com.hasnat.optimum.approval.entity.ApprovalConfig;
 import com.hasnat.optimum.common.enums.*;
-import com.hasnat.optimum.common.enums.Module;
+import com.hasnat.optimum.security.entity.Module;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 import java.util.*;

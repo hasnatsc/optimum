@@ -1,4 +1,4 @@
-package com.hasnat.optimum.common.enums;
+package com.hasnat.optimum.security.entity;
 public enum Module {
     CORE_SECURITY, HRM, SALES_CUSTOMER_OPERATIONS, PURCHASE_SUPPLIER,
     INVENTORY_WAREHOUSE, FINANCE_ACCOUNTS, PRODUCTION, PRODUCT_CATALOG_ECOMMERCE,
