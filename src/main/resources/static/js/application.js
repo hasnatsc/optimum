@@ -269,14 +269,14 @@ function objectifyForm(form) {
  * Reset a form: native reset + clear hidden inputs + reset all select2.
  * @param {HTMLFormElement} form
  */
-
 function hsResetForm(form) {
-    if (form) {
-        form.reset();
-        form.querySelectorAll('input[type="hidden"]').forEach(el => el.value = '');
-        $(form).find('select').val('').trigger('change');
-    }
+    // FIX: guard — callers may pass document.getElementById() result which can be null
+    if (!form) return;
+    form.reset();
+    form.querySelectorAll('input[type="hidden"]').forEach(el => el.value = '');
+    $(form).find('select').val('').trigger('change');
 }
+
 /**
  * Disable a submit button and show a spinner.
  * @param {HTMLButtonElement} submitBtn
@@ -285,9 +285,10 @@ function hsResetForm(form) {
  * @param {string}            [loadingLabel='Processing…']
  */
 function hsDisableButton(submitBtn, spinner, btnText, loadingLabel = 'Processing…') {
-    submitBtn.disabled = true;
-    spinner.classList.remove('d-none');
-    btnText.textContent = loadingLabel;
+    // FIX: each param is optional — callers may pass null when the element is absent
+    if (submitBtn) submitBtn.disabled = true;
+    if (spinner)   spinner.classList.remove('d-none');
+    if (btnText)   btnText.textContent = loadingLabel;
 }
 
 /**
@@ -298,9 +299,10 @@ function hsDisableButton(submitBtn, spinner, btnText, loadingLabel = 'Processing
  * @param {string}            [label='Save']
  */
 function hsEnableButton(submitBtn, spinner, btnText, label = 'Save') {
-    submitBtn.disabled = false;
-    spinner.classList.add('d-none');
-    btnText.textContent = label;
+    // FIX: mirror the null guards in hsDisableButton
+    if (submitBtn) submitBtn.disabled = false;
+    if (spinner)   spinner.classList.add('d-none');
+    if (btnText)   btnText.textContent = label;
 }
 
 /**
@@ -340,6 +342,8 @@ function hsEnableBtn(id) {
  */
 function hsOpenModal(modal) {
     const el = typeof modal === 'string' ? document.getElementById(modal) : modal;
+    // FIX: element might not exist in the DOM on this page
+    if (!el) { console.warn('[hsOpenModal] Element not found:', modal); return; }
     bootstrap.Modal.getOrCreateInstance(el).show();
 }
 
@@ -349,7 +353,10 @@ function hsOpenModal(modal) {
  * @param {string} formId
  */
 function hsOpenModalForm(modalId, formId) {
-    hsResetForm(document.getElementById(formId));
+    const formEl = document.getElementById(formId);
+    // FIX: hsResetForm now handles null, but log a warning for easier debugging
+    if (!formEl) console.warn('[hsOpenModalForm] Form not found:', formId);
+    hsResetForm(formEl);
     hsOpenModal(modalId);
 }
 
@@ -699,7 +706,8 @@ function actionWithRemarks({
         confirmButtonColor: confirmColor,
         confirmButtonText:  confirmText,
         preConfirm: () => ({
-            remarks: document.getElementById('actionRemarks').value || ''
+            // FIX: use ?. — element is injected by Swal, existence not guaranteed on every browser tick
+            remarks: document.getElementById('actionRemarks')?.value?.trim() || ''
         })
     }).then(result => {
         if (!result.isConfirmed) return;
@@ -1499,7 +1507,9 @@ function importData(label, endpoint, dataTable = null, payload = null) {
  */
 function asgLoadDropdown({ url = null, data = null, elementId, selectedValue = null }) {
     const populate = (items) => {
-        const dropdown   = document.getElementById(elementId);
+        const dropdown = document.getElementById(elementId);
+        // FIX: element may not exist if called before DOM is ready or with a wrong ID
+        if (!dropdown) { console.warn('[asgLoadDropdown] Element not found:', elementId); return; }
         const firstOption = dropdown.querySelector('option');
         dropdown.innerHTML = '';
         if (firstOption) dropdown.appendChild(firstOption);
@@ -1693,6 +1703,10 @@ function hsInitAjaxForm(
     const btnText   = document.querySelector(btnTextId);
 
     if (!form) { console.warn(`[hsInitAjaxForm] Form "${formId}" not found.`); return; }
+    // FIX: warn if button elements are missing — hsDisableButton/Enable now handle null gracefully
+    if (!submitBtn) console.warn('[hsInitAjaxForm] Submit button not found:', submitBtnId);
+    if (!spinner)   console.warn('[hsInitAjaxForm] Spinner not found:',        spinnerId);
+    if (!btnText)   console.warn('[hsInitAjaxForm] Button text not found:',    btnTextId);
 
     $(form).parsley();
 

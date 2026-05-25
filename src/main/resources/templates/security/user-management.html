@@ -7,14 +7,12 @@
   <meta name="_csrf"        content="">
   <meta name="_csrf_header" content="X-CSRF-TOKEN">
 
-  <link href="/css/app.min.css" rel="stylesheet"/>
-  <link href="/css/vendor.min.css" rel="stylesheet"/>
-  <link href="/css/application.css" rel="stylesheet"/>
+  <link href="/css/app.min.css"                              rel="stylesheet"/>
+  <link href="/css/vendor.min.css"                           rel="stylesheet"/>
+  <link href="/css/application.css"                          rel="stylesheet"/>
   <link href="/css/dataTables/dataTables.bootstrap5.min.css" rel="stylesheet"/>
   <link href="/css/dataTables/responsive.bootstrap5.min.css" rel="stylesheet"/>
-  <link href="/css/plugins/select2.min.css" rel="stylesheet"/>
-  <link href="/css/plugins/bootstrap-datepicker.min.css" rel="stylesheet"/>
-  <link href="/css/plugins/bootstrap-datetimepicker.min.css" rel="stylesheet"/>
+  <link href="/css/plugins/select2.min.css"                  rel="stylesheet"/>
 
   <script src="/js/app.min.js"></script>
   <script src="/js/vendor.min.js"></script>
@@ -26,9 +24,6 @@
   <script src="/js/dataTables/highlight.min.js"></script>
   <script src="/js/dataTables/render.highlight.js"></script>
   <script src="/js/plugins/select2.min.js"></script>
-  <script src="/js/plugins/bootstrap-datepicker.js"></script>
-  <script src="/js/plugins/bootstrap-datetimepicker.min.js"></script>
-  <script src="/js/plugins/moment.min.js"></script>
   <script src="/js/plugins/sweetalert.js"></script>
   <script src="/js/plugins/parsley.min.js"></script>
   <script src="/js/application.js"></script>
@@ -39,9 +34,135 @@
 
 <div id="app" class="app app-header-fixed app-sidebar-fixed app-without-sidebar app-with-top-menu">
 
-  <!-- topMenuHeader + topMenu assembled here (same as other pages) -->
-  <div id="topMenuHeader" class="app-header"><!-- assembled from fragment --></div>
-  <div id="top-menu"      class="app-top-menu" data-bs-theme="dark"><!-- assembled from fragment --></div>
+  <div id="topMenuHeader" class="app-header">
+
+    <div class="navbar-header">
+      <a href="/dashboard" class="navbar-brand">
+        <span class="navbar-logo"></span> <b class="me-3px">Spindles</b> ERP
+      </a>
+      <button type="button" class="navbar-mobile-toggler" data-toggle="app-top-menu-mobile">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+
+    <div class="navbar-nav">
+
+      <!-- Context Switchers -->
+      <div class="navbar-item dropdown" id="contextSwitchers">
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-sm btn-outline-theme dropdown-toggle" type="button"
+                  id="orgDropdown" data-bs-toggle="dropdown">
+            <i class="fa fa-building"></i>
+            <span id="currentOrgName">Select Organization</span>
+          </button>
+          <ul class="dropdown-menu" id="orgList">
+            <li><a class="dropdown-item disabled">Loading...</a></li>
+          </ul>
+        </div>
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-sm btn-outline-theme dropdown-toggle" type="button"
+                  id="buDropdown" data-bs-toggle="dropdown">
+            <i class="fa fa-briefcase"></i>
+            <span id="currentBuName">Select Business Unit</span>
+          </button>
+          <ul class="dropdown-menu" id="buList">
+            <li><a class="dropdown-item disabled">Loading...</a></li>
+          </ul>
+        </div>
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-sm btn-outline-theme dropdown-toggle" type="button"
+                  id="ccDropdown" data-bs-toggle="dropdown">
+            <i class="fa fa-chart-pie"></i>
+            <span id="currentCcName">Select Cost Center</span>
+          </button>
+          <ul class="dropdown-menu" id="ccList">
+            <li><a class="dropdown-item disabled">Loading...</a></li>
+          </ul>
+        </div>
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-sm btn-outline-theme dropdown-toggle" type="button"
+                  id="whDropdown" data-bs-toggle="dropdown">
+            <i class="fa fa-warehouse"></i>
+            <span id="currentWhName">Select Warehouse</span>
+          </button>
+          <ul class="dropdown-menu" id="whList">
+            <li><a class="dropdown-item disabled">Loading...</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="navbar-item navbar-form">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Enter keyword"/>
+          <button type="button" class="btn btn-search"><i class="fa fa-search"></i></button>
+        </div>
+      </div>
+
+      <div class="navbar-item dropdown">
+        <a href="#" data-bs-toggle="dropdown" class="navbar-link dropdown-toggle icon">
+          <i class="fa fa-bell"></i><span class="badge">5</span>
+        </a>
+        <div class="dropdown-menu media-list dropdown-menu-end">
+          <div class="dropdown-header">NOTIFICATIONS (5)</div>
+          <a href="javascript:;" class="dropdown-item media">
+            <div class="media-left"><i class="fa fa-bug media-object bg-gray-500"></i></div>
+            <div class="media-body">
+              <h6 class="media-heading">Server Error Reports <i class="fa fa-exclamation-circle text-danger"></i></h6>
+              <div class="text-muted fs-10px">3 minutes ago</div>
+            </div>
+          </a>
+          <div class="dropdown-footer text-center">
+            <a href="javascript:;" class="text-decoration-none">View more</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-item navbar-user dropdown">
+        <a href="#" class="navbar-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown">
+          <img src="/img/user/user-13.jpg" alt="User">
+          <span><span class="d-none d-md-inline">superadmin</span><b class="caret"></b></span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end me-1">
+          <a href="/profile"  class="dropdown-item">Edit Profile</a>
+          <a href="/inbox"    class="dropdown-item d-flex align-items-center">
+            Inbox <span class="badge bg-danger rounded-pill ms-auto pb-4px">2</span>
+          </a>
+          <a href="/calendar" class="dropdown-item">Calendar</a>
+          <a href="javascript:;" class="dropdown-item" id="changePasswordBtn">Change Password</a>
+          <div class="dropdown-divider"></div>
+          <form action="/logout" method="post" style="display:inline;">
+            <input type="hidden" name="_csrf" value="">
+            <button type="submit" class="dropdown-item">Log Out</button>
+          </form>
+        </div>
+      </div>
+    </div><!-- /navbar-nav -->
+  </div><!-- /topMenuHeader -->
+
+
+  <div id="top-menu" class="app-top-menu" data-bs-theme="dark">
+    <div class="menu" id="dynamic-top-menu">
+      <div class="menu-loading text-center py-4" id="menuLoader">
+        <div class="spinner-border text-light" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="text-light mt-2">Loading menu…</div>
+      </div>
+      <div class="menu-item menu-control menu-control-start">
+        <a href="javascript:;" class="menu-link" data-toggle="app-top-menu-prev">
+          <i class="fa fa-angle-left"></i>
+        </a>
+      </div>
+      <div class="menu-item menu-control menu-control-end">
+        <a href="javascript:;" class="menu-link" data-toggle="app-top-menu-next">
+          <i class="fa fa-angle-right"></i>
+        </a>
+      </div>
+    </div>
+  </div><!-- /top-menu -->
+
 
   <div class="app-sidebar-mobile-backdrop">
     <a href="#" data-dismiss="app-sidebar-mobile" class="stretched-link"></a>
@@ -92,10 +213,7 @@
           </div>
         </div>
 
-        <!-- DataTable
-             Columns mirror UserServiceImpl.buildActionButtons() row map keys:
-             sl, username, full_name, email, phone, roles, status, actions
-        -->
+        <!-- DataTable -->
         <table id="userTable" width="100%"
                class="table table-striped table-bordered align-middle text-nowrap dataTable dtr-inline">
           <thead>
@@ -139,7 +257,7 @@
 
               <div class="row g-3">
 
-                <!-- ── Basic Info ──────────────────────────────────── -->
+                <!-- Basic Info -->
                 <div class="col-12">
                   <h6 class="text-primary mb-0"><i class="fa fa-id-card me-1"></i>Basic Information</h6>
                   <hr class="mt-1 mb-0">
@@ -147,35 +265,30 @@
 
                 <div class="col-md-6">
                   <label class="form-label">Username <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="uUsername"
-                         name="username" required
-                         data-parsley-required="true"
-                         data-parsley-minlength="3"
+                  <input type="text" class="form-control" id="uUsername" name="username"
+                         required data-parsley-required="true" data-parsley-minlength="3"
                          placeholder="e.g. john.doe">
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                  <input type="text" class="form-control" id="uFullName"
-                         name="fullName" required data-parsley-required="true"
-                         placeholder="e.g. John Doe">
+                  <input type="text" class="form-control" id="uFullName" name="fullName"
+                         required data-parsley-required="true" placeholder="e.g. John Doe">
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label">Email <span class="text-danger">*</span></label>
-                  <input type="email" class="form-control" id="uEmail"
-                         name="email" required data-parsley-required="true"
-                         data-parsley-type="email"
+                  <input type="email" class="form-control" id="uEmail" name="email"
+                         required data-parsley-required="true" data-parsley-type="email"
                          placeholder="user@company.com">
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label">Phone</label>
-                  <input type="text" class="form-control" id="uPhone"
-                         name="phone" placeholder="+880…">
+                  <input type="text" class="form-control" id="uPhone" name="phone" placeholder="+880…">
                 </div>
 
-                <!-- ── Password section ────────────────────────────── -->
+                <!-- Password -->
                 <div class="col-12">
                   <h6 class="text-warning mb-0 mt-1">
                     <i class="fa fa-lock me-1"></i>Password
@@ -185,12 +298,12 @@
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label" id="pwLabel">
+                  <label class="form-label">
                     Password <span class="text-danger" id="pwRequired">*</span>
                   </label>
                   <div class="input-group">
-                    <input type="password" class="form-control" id="uPassword"
-                           name="password" placeholder="Min 8 characters"
+                    <input type="password" class="form-control" id="uPassword" name="password"
+                           placeholder="Min 8 characters"
                            data-parsley-minlength="8"
                            data-parsley-minlength-message="Minimum 8 characters.">
                     <button type="button" class="btn btn-outline-secondary" id="pwToggle1">
@@ -200,7 +313,9 @@
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label">Confirm Password <span class="text-danger" id="cpRequired">*</span></label>
+                  <label class="form-label">
+                    Confirm Password <span class="text-danger" id="cpRequired">*</span>
+                  </label>
                   <div class="input-group">
                     <input type="password" class="form-control" id="uConfirmPassword"
                            placeholder="Repeat password"
@@ -212,7 +327,7 @@
                   </div>
                 </div>
 
-                <!-- ── Roles & Dashboard ───────────────────────────── -->
+                <!-- Roles & Dashboard -->
                 <div class="col-12">
                   <h6 class="text-info mb-0 mt-1">
                     <i class="fa fa-shield-halved me-1"></i>Roles &amp; Access
@@ -241,7 +356,7 @@
                   </select>
                 </div>
 
-                <!-- ── Account flags ───────────────────────────────── -->
+                <!-- Account Flags -->
                 <div class="col-12">
                   <h6 class="text-secondary mb-0 mt-1">
                     <i class="fa fa-sliders me-1"></i>Account Flags
@@ -251,23 +366,19 @@
 
                 <div class="col-12 d-flex flex-wrap gap-4">
                   <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="uEnabled"
-                           name="enabled" checked>
+                    <input class="form-check-input" type="checkbox" id="uEnabled" name="enabled" checked>
                     <label class="form-check-label fw-semibold" for="uEnabled">Enabled</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="uAccountNonLocked"
-                           name="accountNonLocked" checked>
+                    <input class="form-check-input" type="checkbox" id="uAccountNonLocked" name="accountNonLocked" checked>
                     <label class="form-check-label fw-semibold" for="uAccountNonLocked">Account Non-Locked</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="uAccountNonExpired"
-                           name="accountNonExpired" checked>
+                    <input class="form-check-input" type="checkbox" id="uAccountNonExpired" name="accountNonExpired" checked>
                     <label class="form-check-label fw-semibold" for="uAccountNonExpired">Account Non-Expired</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="uCredNonExpired"
-                           name="credentialsNonExpired" checked>
+                    <input class="form-check-input" type="checkbox" id="uCredNonExpired" name="credentialsNonExpired" checked>
                     <label class="form-check-label fw-semibold" for="uCredNonExpired">Credentials Non-Expired</label>
                   </div>
                 </div>
@@ -305,7 +416,7 @@
           <div class="hs-box">
             <div class="row g-3">
 
-              <!-- Status banner -->
+              <!-- Status Banner -->
               <div class="col-12">
                 <div class="alert alert-info text-center mb-0 py-2">
                   <strong id="sv_username">—</strong>
@@ -347,17 +458,17 @@
                 <span id="sv_dashboard" class="form-control hs_span_show"></span>
               </div>
 
-              <!-- Account flags -->
+              <!-- Account Flags -->
               <div class="col-12">
                 <h6 class="text-secondary mb-0 mt-1"><i class="fa fa-sliders me-1"></i>Account Flags</h6>
                 <hr class="mt-1 mb-0">
               </div>
 
               <div class="col-12 d-flex flex-wrap gap-3">
-                <span id="sv_enabled"          class="badge fs-12px"></span>
-                <span id="sv_locked"            class="badge fs-12px"></span>
-                <span id="sv_accountExpired"    class="badge fs-12px"></span>
-                <span id="sv_credExpired"       class="badge fs-12px"></span>
+                <span id="sv_enabled"       class="badge fs-12px"></span>
+                <span id="sv_locked"        class="badge fs-12px"></span>
+                <span id="sv_accountExpired" class="badge fs-12px"></span>
+                <span id="sv_credExpired"   class="badge fs-12px"></span>
               </div>
 
               <!-- Audit -->
@@ -387,14 +498,301 @@
 </div><!-- /app -->
 
 
-<!-- ═══════════════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════════════════════════════════════
      CONSOLIDATED SCRIPTS
-     ═══════════════════════════════════════════════════════════ -->
+     ═══════════════════════════════════════════════════════════════════════ -->
+<!--<script>-->
+<!--     One block — no more scattered <script> tags across multiple <div>s.-->
+<!--     ═══════════════════════════════════════════════════════════════════════ &ndash;&gt;-->
 <script>
+/* ─────────────────────────────────────────────────────────────
+   0.  FALLBACK HELPERS
+   These are normally provided by application.js.
+   Defined here only as safety guards so the page works
+   even in isolation (e.g. local testing).
+   ───────────────────────────────────────────────────────────── */
+if (typeof nullCheck === 'undefined') {
+    window.nullCheck = v => (v != null && v !== '') ? v : '—';
+}
+if (typeof hsDisableButton === 'undefined') {
+    window.hsDisableButton = (btn, spin, txt) => {
+        btn.disabled = true;
+        spin.classList.remove('d-none');
+        txt.textContent = 'Saving…';
+    };
+}
+if (typeof hsEnableButton === 'undefined') {
+    window.hsEnableButton = (btn, spin, txt) => {
+        btn.disabled = false;
+        spin.classList.add('d-none');
+        txt.textContent = 'Save';
+    };
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   1.  TOP MENU — dynamic load + App.initTopMenu() patch
+   (identical logic from fragments/topMenu :: topMenu)
+   ───────────────────────────────────────────────────────────── */
+(function () {
+    function patchApp() {
+        if (typeof App !== 'undefined' && typeof App.initTopMenu === 'function') {
+            window.__realInitTopMenu = App.initTopMenu.bind(App);
+            App.initTopMenu = function () { /* deferred until dynamic render completes */ };
+            return true;
+        }
+        return false;
+    }
+    if (!patchApp()) {
+        document.addEventListener('DOMContentLoaded', patchApp, true); // capture = runs first
+    }
+    document.addEventListener('DOMContentLoaded', loadDynamicTopMenu);
+})();
+
+function loadDynamicTopMenu() {
+    secureFetch('/openApi/menus/user-menu')
+        .then(function (data) {
+            if (!data.success) { showTopMenuError(data.message || 'Failed to load menu'); return; }
+            var flat  = (data.menus && data.menus.items) ? data.menus.items : [];
+            var tree  = buildMenuTree(flat);
+            sortMenus(tree);
+            renderTopMenu(tree);
+            expandActiveMenu();
+            var init = window.__realInitTopMenu || (typeof App !== 'undefined' && App.initTopMenu);
+            // FIX: App.initTopMenu() queries '.menu-item:not(.menu-control)' which is
+            // null before items render → "t is null / querySelectorAll" crash.
+            // Swallow the error so the page keeps working even if init fails.
+            if (typeof init === 'function') {
+                try { init(); }
+                catch (e) { console.warn('[TopMenu] App.initTopMenu() skipped:', e.message); }
+            }
+        })
+        .catch(function (err) {
+            console.error('Top menu load error:', err);
+            showTopMenuError('Failed to load top menu.');
+        });
+}
+
+function buildMenuTree(flat) {
+    var map = {}, roots = [];
+    flat.forEach(function (m) { m.subMenus = []; map[m.id] = m; });
+    flat.forEach(function (m) {
+        m.parentMenuId && map[m.parentMenuId]
+            ? map[m.parentMenuId].subMenus.push(m)
+            : roots.push(m);
+    });
+    return roots;
+}
+function sortMenus(menus) {
+    menus.sort(function (a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+    menus.forEach(function (m) { if (m.subMenus && m.subMenus.length) sortMenus(m.subMenus); });
+}
+function renderTopMenu(modules) {
+    var container = document.getElementById('dynamic-top-menu');
+    if (!container) return;
+    var loader = document.getElementById('menuLoader');
+    if (loader) loader.remove();
+    container.querySelectorAll('.menu-item:not(.menu-control)').forEach(function (el) { el.remove(); });
+    var anchor = container.querySelector('.menu-control-start');
+    modules.forEach(function (mod) {
+        var el = buildModuleEl(mod);
+        anchor ? container.insertBefore(el, anchor) : container.appendChild(el);
+    });
+}
+function buildModuleEl(mod) {
+    var item = document.createElement('div');
+    item.className = 'menu-item has-sub';
+    item.innerHTML =
+        '<a href="javascript:;" class="menu-link">' +
+        '<div class="menu-icon"><i class="' + (mod.icon || 'fa fa-layer-group') + '"></i></div>' +
+        '<div class="menu-text">' + escHtml(mod.menuName) + '</div>' +
+        '<div class="menu-caret"></div>' +
+        '</a><div class="menu-submenu"></div>';
+    var sub = item.querySelector('.menu-submenu');
+    (mod.subMenus || []).forEach(function (g) { sub.appendChild(buildGroupEl(g)); });
+    return item;
+}
+function buildGroupEl(group) {
+    var item = document.createElement('div');
+    item.className = 'menu-item has-sub';
+    item.innerHTML =
+        '<a href="javascript:;" class="menu-link">' +
+        '<div class="menu-text">' + escHtml(group.menuName) + '</div>' +
+        '<div class="menu-caret"></div>' +
+        '</a><div class="menu-submenu"></div>';
+    var sub = item.querySelector('.menu-submenu');
+    (group.subMenus || []).forEach(function (m) { sub.appendChild(buildLeafEl(m)); });
+    return item;
+}
+function buildLeafEl(menu) {
+    var item = document.createElement('div');
+    var isActive = menu.menuUrl && window.location.pathname === menu.menuUrl;
+    item.className = 'menu-item' + (isActive ? ' active' : '');
+    item.innerHTML =
+        '<a href="' + (menu.menuUrl || '#') + '" class="menu-link"' +
+        ' target="' + (menu.target || '_self') + '">' +
+        '<div class="menu-text">' + escHtml(menu.menuName) + '</div>' +
+        '</a>';
+    return item;
+}
+function expandActiveMenu() {
+    var active = document.querySelector('#dynamic-top-menu .menu-item.active');
+    if (!active) return;
+    var p = active.parentElement;
+    while (p && p.id !== 'dynamic-top-menu') {
+        if (p.classList && p.classList.contains('menu-item')) p.classList.add('open');
+        p = p.parentElement;
+    }
+}
+function showTopMenuError(msg) {
+    var loader = document.getElementById('menuLoader');
+    if (loader) loader.innerHTML =
+        '<div class="alert alert-danger m-3"><i class="fa fa-exclamation-triangle"></i> ' +
+        escHtml(msg) + '</div>';
+}
+function escHtml(text) {
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text ? text.replace(/[&<>"']/g, function (c) { return map[c]; }) : '';
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   2.  CONTEXT SWITCHERS
+   (from topMenuHeader script block)
+   ───────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    const csrfToken  = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    let ctx = {};
+
+    function loadContext() {
+        secureFetch('/user-context/allowed/context')
+            .then(data => { ctx = data.current || {}; renderCtx(ctx); renderDropdowns(data); })
+            .catch(e => console.error('Context load failed', e));
+    }
+    function renderCtx(c) {
+        setText('currentOrgName', c.organizationName || 'Select Organization');
+        setText('currentBuName',  c.businessUnitName || 'Select Business Unit');
+        setText('currentCcName',  c.costCenterName   || 'Select Cost Center');
+        setText('currentWhName',  c.warehouseName    || 'Select Warehouse');
+    }
+    function renderDropdowns(data) {
+        renderList('orgList', data.organizations, ctx.organizationId, switchOrg);
+        renderList('buList',  data.businessUnits, ctx.businessUnitId, switchBU);
+        renderList('ccList',  data.costCenters,   ctx.costCenterId,   switchCC);
+        renderList('whList',  data.warehouses,    ctx.warehouseId,    switchWH);
+    }
+    function renderList(listId, items, selectedId, handler) {
+        const ul = document.getElementById(listId);
+        ul.innerHTML = '';
+        if (!items || !items.length) {
+            ul.innerHTML = '<li><a class="dropdown-item disabled">None</a></li>';
+            return;
+        }
+        items.forEach(i => {
+            const a  = document.createElement('a');
+            a.className = 'dropdown-item';
+            a.href = '#';
+            a.innerHTML = i.code + ' — ' + i.name +
+                (i.id === selectedId ? ' <i class="fa fa-check text-success"></i>' : '');
+            a.onclick = () => handler(i.id);
+            const li = document.createElement('li');
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+    }
+    function switchOrg(id) { doSwitch('/user-context/switch/organization/'  + id); }
+    function switchBU(id)  { doSwitch('/user-context/switch/business-unit/' + id); }
+    function switchCC(id)  { doSwitch('/user-context/switch/cost-center/'   + id); }
+    function switchWH(id)  { doSwitch('/user-context/switch/warehouse/'     + id); }
+    function doSwitch(url) {
+        secureFetch(url, { method: 'POST', headers: { [csrfHeader]: csrfToken } })
+            .then(res => {
+                if (res.success) { toast('Success', res.message, 'success'); loadContext(); }
+                else             { toast('Error',   res.message, 'error'); }
+            })
+            .catch(() => toast('Error', 'Request failed', 'error'));
+    }
+    function setText(id, txt) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = txt;
+    }
+    function toast(title, msg, type) {
+        if (window.Swal) {
+            Swal.fire({ icon: type, title, text: msg, toast: true,
+                        position: 'top-end', timer: 2500, showConfirmButton: false });
+        }
+    }
+    loadContext();
+});
+
+
+/* ─────────────────────────────────────────────────────────────
+   3.  CHANGE PASSWORD  (navbar action)
+   ───────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('changePasswordBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        const csrfToken  = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+        Swal.fire({
+            title: 'Change Password',
+            html: `
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+                    <div style="position:relative;">
+                        <input type="password" id="swNewPwd" placeholder="New Password"
+                            style="width:100%;padding:12px 40px 12px 15px;border-radius:8px;border:1px solid #ccc;font-size:14px;">
+                        <i class="fa fa-eye" id="togNewPwd"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:#666;"></i>
+                    </div>
+                    <div style="position:relative;">
+                        <input type="password" id="swConfPwd" placeholder="Confirm Password"
+                            style="width:100%;padding:12px 40px 12px 15px;border-radius:8px;border:1px solid #ccc;font-size:14px;">
+                        <i class="fa fa-eye" id="togConfPwd"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:#666;"></i>
+                    </div>
+                </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Update',
+            focusConfirm: false,
+            didOpen: () => {
+                document.getElementById('togNewPwd').addEventListener('click', () => {
+                    const el = document.getElementById('swNewPwd');
+                    el.type = el.type === 'password' ? 'text' : 'password';
+                });
+                document.getElementById('togConfPwd').addEventListener('click', () => {
+                    const el = document.getElementById('swConfPwd');
+                    el.type = el.type === 'password' ? 'text' : 'password';
+                });
+            },
+            preConfirm: () => {
+                const p1 = document.getElementById('swNewPwd').value;
+                const p2 = document.getElementById('swConfPwd').value;
+                if (!p1 || !p2)      { Swal.showValidationMessage('All fields required'); return false; }
+                if (p1.length < 6)   { Swal.showValidationMessage('Minimum 6 characters'); return false; }
+                if (p1 !== p2)       { Swal.showValidationMessage('Passwords do not match'); return false; }
+                return p1;
+            }
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            fetch('/openApi/menus/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ password: r.value })
+            })
+            .then(res => { if (!res.ok) throw new Error(res.status); return res.json(); })
+            .then(() => Swal.fire('Success', 'Password updated', 'success'))
+            .catch(() => Swal.fire('Error', 'Update failed', 'error'));
+        });
+    });
+});
+
 
 /* ─────────────────────────────────────────────────────────
-   1.  DATATABLE
-   Columns mirror UserServiceImpl.datatableList() row map keys.
+   4.  DATATABLE
+   Columns mirror UserServiceImpl.datatableList() row map keys:
+   sl, username, full_name, email, phone, roles, status, actions
    ───────────────────────────────────────────────────────── */
 let userDT;
 
@@ -411,14 +809,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
         columns: [
-            { data: 'sl',        orderable: false, width: '3%' },
-            { data: 'username'                                  },
-            { data: 'full_name'                                 },
-            { data: 'email'                                     },
-            { data: 'phone'                                     },
-            { data: 'roles',     orderable: false               },
-            { data: 'status',    orderable: false               },
-            { data: 'actions',   orderable: false               }
+            { data: 'sl',       orderable: false, width: '3%' },
+            { data: 'username'                                 },
+            { data: 'full_name'                                },
+            { data: 'email'                                    },
+            { data: 'phone'                                    },
+            { data: 'roles',    orderable: false               },
+            { data: 'status',   orderable: false               },
+            { data: 'actions',  orderable: false               }
         ]
     });
 
@@ -426,19 +824,14 @@ document.addEventListener('DOMContentLoaded', function () {
         userDT.ajax.reload()
     );
 
-    // Attach parsley + form submit
     initUserForm();
-
-    // Init password toggles
     initPwToggles();
-
-    // Init roles select2
     initRolesSelect2();
 });
 
 
 /* ─────────────────────────────────────────────────────────
-   2.  SELECT2 — role multi-select
+   5.  SELECT2 — role multi-select
    ───────────────────────────────────────────────────────── */
 function initRolesSelect2(preselect) {
     const $sel = $('#uRoleIds');
@@ -460,18 +853,13 @@ function initRolesSelect2(preselect) {
             }),
             cache: true
         },
-        templateResult: function (repo) {
-            if (repo.loading) return repo.text;
-            return $(`<div><strong>${repo.text}</strong></div>`);
-        },
+        templateResult:    repo => repo.loading ? repo.text : $(`<div><strong>${repo.text}</strong></div>`),
         templateSelection: repo => repo.text || repo.id
     });
 
-    // Edit mode — preselect existing roles
     if (preselect && Array.isArray(preselect.roleIds) && preselect.roleIds.length) {
-        const names  = (preselect.roleNames || '').split(', ');
-        const ids    = preselect.roleIds;
-        ids.forEach((id, i) => {
+        const names = (preselect.roleNames || '').split(', ');
+        preselect.roleIds.forEach((id, i) => {
             $sel.append(new Option(names[i] || id, id, true, true));
         });
         $sel.trigger('change');
@@ -480,13 +868,36 @@ function initRolesSelect2(preselect) {
 
 
 /* ─────────────────────────────────────────────────────────
-   3.  FORM INIT + PARSLEY HOOKS + SUBMIT
+   6.  FORM RESET
+   ───────────────────────────────────────────────────────── */
+function resetUserForm() {
+    const form = document.getElementById('userForm');
+    if (form) form.reset();
+
+    const userId = document.getElementById('userId');
+    if (userId) userId.value = '';
+
+    const $r = $('#uRoleIds');
+    if ($r.hasClass('select2-hidden-accessible')) $r.val(null).trigger('change');
+
+    // Reset account-flag checkboxes to default ON
+    ['uEnabled', 'uAccountNonLocked', 'uAccountNonExpired', 'uCredNonExpired'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = true;
+    });
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   7.  FORM — PARSLEY HOOKS + SUBMIT
    ───────────────────────────────────────────────────────── */
 function initUserForm() {
     const form      = document.getElementById('userForm');
     const submitBtn = document.getElementById('userSubmitBtn');
     const spinner   = document.getElementById('userSpinner');
     const btnText   = document.getElementById('userBtnText');
+
+    if (!form) { console.warn('[initUserForm] #userForm not found'); return; }
 
     window.Parsley.on('field:error',   function () { this.$element.addClass('is-invalid'); });
     window.Parsley.on('field:success', function () { this.$element.removeClass('is-invalid'); });
@@ -495,10 +906,9 @@ function initUserForm() {
         e.preventDefault();
         if (!$(form).parsley().isValid()) return;
 
-        const isEdit   = !!document.getElementById('userId').value;
-        const pwValue  = document.getElementById('uPassword').value.trim();
+        const isEdit  = !!document.getElementById('userId')?.value;
+        const pwValue = document.getElementById('uPassword')?.value.trim();
 
-        // For new users, password is mandatory
         if (!isEdit && !pwValue) {
             Swal.fire('Validation', 'Password is required for new users.', 'warning');
             return;
@@ -513,17 +923,17 @@ function initUserForm() {
         hsDisableButton(submitBtn, spinner, btnText);
 
         const payload = {
-            id:                    document.getElementById('userId').value || null,
-            username:              document.getElementById('uUsername').value.trim(),
-            fullName:              document.getElementById('uFullName').value.trim(),
-            email:                 document.getElementById('uEmail').value.trim(),
-            phone:                 document.getElementById('uPhone').value.trim() || null,
+            id:                    document.getElementById('userId')?.value || null,
+            username:              document.getElementById('uUsername')?.value.trim(),
+            fullName:              document.getElementById('uFullName')?.value.trim(),
+            email:                 document.getElementById('uEmail')?.value.trim(),
+            phone:                 document.getElementById('uPhone')?.value.trim() || null,
             password:              pwValue || null,
-            enabled:               document.getElementById('uEnabled').checked,
-            accountNonLocked:      document.getElementById('uAccountNonLocked').checked,
-            accountNonExpired:     document.getElementById('uAccountNonExpired').checked,
-            credentialsNonExpired: document.getElementById('uCredNonExpired').checked,
-            defaultDashboard:      document.getElementById('uDefaultDashboard').value,
+            enabled:               document.getElementById('uEnabled')?.checked ?? true,
+            accountNonLocked:      document.getElementById('uAccountNonLocked')?.checked ?? true,
+            accountNonExpired:     document.getElementById('uAccountNonExpired')?.checked ?? true,
+            credentialsNonExpired: document.getElementById('uCredNonExpired')?.checked ?? true,
+            defaultDashboard:      document.getElementById('uDefaultDashboard')?.value || 'DEFAULT',
             roleIds:               roleIds.map(Number)
         };
 
@@ -533,7 +943,8 @@ function initUserForm() {
                 if (data.success) {
                     Swal.fire({ icon: 'success', title: 'Saved!', text: data.message,
                                 timer: 2000, showConfirmButton: false });
-                    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+                    // FIX: use getOrCreateInstance — getInstance returns null if not yet created
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).hide();
                     userDT.ajax.reload();
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error!', text: data.message });
@@ -548,34 +959,31 @@ function initUserForm() {
 
 
 /* ─────────────────────────────────────────────────────────
-   4.  FORM RESET
-   ───────────────────────────────────────────────────────── */
-function resetUserForm() {
-    document.getElementById('userForm').reset();
-    document.getElementById('userId').value = '';
-    const $r = $('#uRoleIds');
-    if ($r.hasClass('select2-hidden-accessible')) $r.val(null).trigger('change');
-    // Reset all checkboxes to default ON
-    ['uEnabled','uAccountNonLocked','uAccountNonExpired','uCredNonExpired']
-        .forEach(id => document.getElementById(id).checked = true);
-}
-
-
-/* ─────────────────────────────────────────────────────────
-   5.  OPEN CREATE MODAL
+   8.  OPEN CREATE MODAL
    ───────────────────────────────────────────────────────── */
 function openCreateModal() {
     resetUserForm();
-    document.getElementById('userModalLabel').innerHTML =
-        '<i class="fa fa-user-plus text-success me-2"></i>Create User';
 
-    // Password is required for new users
-    document.getElementById('uPassword').setAttribute('required', '');
-    document.getElementById('uPassword').setAttribute('data-parsley-required', 'true');
-    document.getElementById('uConfirmPassword').setAttribute('required', '');
-    document.getElementById('pwHint').textContent  = ' — required for new user';
-    document.getElementById('pwRequired').style.display = 'inline';
-    document.getElementById('cpRequired').style.display = 'inline';
+    const label = document.getElementById('userModalLabel');
+    if (label) label.innerHTML = '<i class="fa fa-user-plus text-success me-2"></i>Create User';
+
+    // Password is required for new users — set attributes + show asterisk
+    const pwd = document.getElementById('uPassword');
+    if (pwd) {
+        pwd.setAttribute('required', '');
+        pwd.setAttribute('data-parsley-required', 'true');
+    }
+    const conf = document.getElementById('uConfirmPassword');
+    if (conf) conf.setAttribute('required', '');
+
+    const hint = document.getElementById('pwHint');
+    if (hint) hint.textContent = ' — required for new user';
+
+    const pwReq = document.getElementById('pwRequired');
+    if (pwReq) pwReq.style.display = 'inline';
+
+    const cpReq = document.getElementById('cpRequired');
+    if (cpReq) cpReq.style.display = 'inline';
 
     initRolesSelect2(null);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
@@ -583,7 +991,7 @@ function openCreateModal() {
 
 
 /* ─────────────────────────────────────────────────────────
-   6.  EDIT  (action button handler — name called from Java)
+   9.  EDIT  (called from Java buildActionButtons)
    ───────────────────────────────────────────────────────── */
 function dataEdit(id) {
     secureFetch('/users/show/' + id).then(data => {
@@ -591,38 +999,47 @@ function dataEdit(id) {
         const u = data.obj.defaultData;
 
         resetUserForm();
-        document.getElementById('userModalLabel').innerHTML =
-            '<i class="fa fa-pen-to-square text-warning me-2"></i>Edit User';
 
-        document.getElementById('userId').value   = u.id;
-        document.getElementById('uUsername').value = u.username;
-        document.getElementById('uFullName').value = u.fullName;
-        document.getElementById('uEmail').value    = u.email;
-        document.getElementById('uPhone').value    = u.phone || '';
-        document.getElementById('uDefaultDashboard').value = u.defaultDashboard || 'DEFAULT';
-        document.getElementById('uEnabled').checked           = u.enabled;
-        document.getElementById('uAccountNonLocked').checked  = u.accountNonLocked;
-        document.getElementById('uAccountNonExpired').checked = u.accountNonExpired;
-        document.getElementById('uCredNonExpired').checked    = u.credentialsNonExpired;
+        const label = document.getElementById('userModalLabel');
+        if (label) label.innerHTML = '<i class="fa fa-pen-to-square text-warning me-2"></i>Edit User';
+
+        // Populate fields using ?. to avoid crashes if an element is ever missing
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+        const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+
+        set('userId',            u.id);
+        set('uUsername',         u.username);
+        set('uFullName',         u.fullName);
+        set('uEmail',            u.email);
+        set('uPhone',            u.phone || '');
+        set('uDefaultDashboard', u.defaultDashboard || 'DEFAULT');
+
+        chk('uEnabled',          u.enabled);
+        chk('uAccountNonLocked', u.accountNonLocked);
+        chk('uAccountNonExpired',u.accountNonExpired);
+        chk('uCredNonExpired',   u.credentialsNonExpired);
 
         // Password optional on edit
-        document.getElementById('uPassword').removeAttribute('required');
-        document.getElementById('uPassword').removeAttribute('data-parsley-required');
-        document.getElementById('uConfirmPassword').removeAttribute('required');
-        document.getElementById('pwHint').textContent   = ' — leave blank to keep current';
-        document.getElementById('pwRequired').style.display = 'none';
-        document.getElementById('cpRequired').style.display = 'none';
+        const pwd = document.getElementById('uPassword');
+        if (pwd) { pwd.removeAttribute('required'); pwd.removeAttribute('data-parsley-required'); }
+        const conf = document.getElementById('uConfirmPassword');
+        if (conf) conf.removeAttribute('required');
 
-        // Preselect roles
+        const hint  = document.getElementById('pwHint');
+        if (hint)  hint.textContent = ' — leave blank to keep current';
+        const pwReq = document.getElementById('pwRequired');
+        if (pwReq) pwReq.style.display = 'none';
+        const cpReq = document.getElementById('cpRequired');
+        if (cpReq) cpReq.style.display = 'none';
+
         initRolesSelect2({ roleIds: u.roleIds, roleNames: u.roleNames });
-
         bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
     });
 }
 
 
 /* ─────────────────────────────────────────────────────────
-   7.  VIEW (action button handler — name called from Java)
+   10. VIEW  (called from Java buildActionButtons)
    ───────────────────────────────────────────────────────── */
 function dataShow(id) {
     secureFetch('/users/show/' + id).then(data => {
@@ -633,21 +1050,18 @@ function dataShow(id) {
 }
 
 function populateViewModal(u) {
-    hsSetText('sv_username', u.username);
+    hsSetText('sv_username', u.username || '—');
 
-    const statusBadge = document.getElementById('sv_statusBadge');
-    if (u.enabled) {
-        statusBadge.textContent  = 'Active';
-        statusBadge.className    = 'badge bg-success ms-2';
-    } else {
-        statusBadge.textContent  = 'Disabled';
-        statusBadge.className    = 'badge bg-secondary ms-2';
+    const badge = document.getElementById('sv_statusBadge');
+    if (badge) {
+        badge.textContent = u.enabled ? 'Active' : 'Disabled';
+        badge.className   = 'badge ms-2 ' + (u.enabled ? 'bg-success' : 'bg-secondary');
     }
 
-    hsSetText('sv_fullName',  u.fullName  || '—');
-    hsSetText('sv_email',     u.email     || '—');
-    hsSetText('sv_phone',     u.phone     || '—');
-    hsSetText('sv_roles',     u.roleNames || 'No Role');
+    hsSetText('sv_fullName',  u.fullName         || '—');
+    hsSetText('sv_email',     u.email            || '—');
+    hsSetText('sv_phone',     u.phone            || '—');
+    hsSetText('sv_roles',     u.roleNames        || 'No Role');
     hsSetText('sv_dashboard', u.defaultDashboard || 'DEFAULT');
     hsSetText('sv_lastLogin', u.lastLoginAt      || 'Never');
     hsSetText('sv_createdBy', u.createdBy        || '—');
@@ -655,24 +1069,22 @@ function populateViewModal(u) {
     hsSetText('sv_updatedBy', u.updatedBy        || '—');
     hsSetText('sv_updatedAt', u.updatedAt        || '—');
 
-    // Account flag badges
-    flagBadge('sv_enabled',         u.enabled,                'Enabled',                  'Disabled');
-    flagBadge('sv_locked',          u.accountNonLocked,       'Account Unlocked',         'Account Locked',       true);
-    flagBadge('sv_accountExpired',  u.accountNonExpired,      'Account Valid',            'Account Expired',      true);
-    flagBadge('sv_credExpired',     u.credentialsNonExpired,  'Credentials Valid',        'Credentials Expired',  true);
+    _flagBadge('sv_enabled',        u.enabled,               'Enabled',           'Disabled');
+    _flagBadge('sv_locked',         u.accountNonLocked,      'Account Unlocked',  'Account Locked');
+    _flagBadge('sv_accountExpired', u.accountNonExpired,     'Account Valid',     'Account Expired');
+    _flagBadge('sv_credExpired',    u.credentialsNonExpired, 'Credentials Valid', 'Credentials Expired');
 }
 
-function flagBadge(id, condition, trueLabel, falseLabel, invertColor) {
+function _flagBadge(id, condition, trueLabel, falseLabel) {
     const el = document.getElementById(id);
     if (!el) return;
-    const good = invertColor ? condition : condition;
     el.textContent = condition ? trueLabel : falseLabel;
     el.className   = 'badge fs-12px ' + (condition ? 'bg-success' : 'bg-danger');
 }
 
 
 /* ─────────────────────────────────────────────────────────
-   8.  DELETE (action button handler — name called from Java)
+   11. DELETE  (called from Java buildActionButtons)
    ───────────────────────────────────────────────────────── */
 function dataDelete(id) {
     confirmAndExecute({
@@ -689,9 +1101,8 @@ function dataDelete(id) {
     });
 }
 
-
 /* ─────────────────────────────────────────────────────────
-   9.  TOGGLE STATUS (action button handler — name called from Java)
+   12. TOGGLE STATUS  (called from Java buildActionButtons)
    ───────────────────────────────────────────────────────── */
 function dataToggle(id) {
     hsChangeStatus('/users/toggle-status/' + id, userDT, 'User');
@@ -699,13 +1110,13 @@ function dataToggle(id) {
 
 
 /* ─────────────────────────────────────────────────────────
-   10. CHANGE PASSWORD (action button handler — name called from Java)
+   13. CHANGE PASSWORD  (called from Java buildActionButtons)
    ───────────────────────────────────────────────────────── */
 function dataPwd(id) {
     Swal.fire({
         title: 'Set New Password',
         html: `
-            <div style="text-align:left; margin-top:10px;">
+            <div style="text-align:left;margin-top:10px;">
                 <div class="mb-3 position-relative">
                     <input type="password" id="newPwd1" class="swal2-input"
                            placeholder="New password (min 8 chars)" style="width:90%">
@@ -724,22 +1135,13 @@ function dataPwd(id) {
         showCancelButton:   true,
         confirmButtonColor: '#17a2b8',
         confirmButtonText:  'Update Password',
-        focusConfirm: false,
+        focusConfirm:       false,
         preConfirm: () => {
-            const p1 = document.getElementById('newPwd1').value;
-            const p2 = document.getElementById('newPwd2').value;
-            if (!p1) {
-                Swal.showValidationMessage('Password is required.');
-                return false;
-            }
-            if (p1.length < 8) {
-                Swal.showValidationMessage('Password must be at least 8 characters.');
-                return false;
-            }
-            if (p1 !== p2) {
-                Swal.showValidationMessage('Passwords do not match.');
-                return false;
-            }
+            const p1 = document.getElementById('newPwd1')?.value;
+            const p2 = document.getElementById('newPwd2')?.value;
+            if (!p1)         { Swal.showValidationMessage('Password is required.'); return false; }
+            if (p1.length<8) { Swal.showValidationMessage('Minimum 8 characters.'); return false; }
+            if (p1 !== p2)   { Swal.showValidationMessage('Passwords do not match.'); return false; }
             return p1;
         }
     }).then(result => {
@@ -747,14 +1149,14 @@ function dataPwd(id) {
         secureFetch(`/users/change-password/${id}`, {
             method: 'POST',
             body:   JSON.stringify({ password: result.value })
-        })
-        .then(data => {
-            if (data.success) {
-                Swal.fire({ icon: 'success', title: 'Done!', text: data.message,
-                            timer: 2000, showConfirmButton: false });
-            } else {
-                Swal.fire({ icon: 'error', title: 'Error!', text: data.message });
-            }
+        }).then(data => {
+            Swal.fire({
+                icon:  data.success ? 'success' : 'error',
+                title: data.success ? 'Done!'   : 'Error!',
+                text:  data.message,
+                timer: data.success ? 2000 : undefined,
+                showConfirmButton: !data.success
+            });
         });
     });
 }
@@ -762,30 +1164,32 @@ function dataPwd(id) {
 function toggleSwalPw(inputId, iconId) {
     const input = document.getElementById(inputId);
     const icon  = document.getElementById(iconId);
-    const show  = input.type === 'password';
+    if (!input || !icon) return;
+    const show     = input.type === 'password';
     input.type     = show ? 'text' : 'password';
-    icon.className = (show ? 'fa fa-eye-slash' : 'fa fa-eye') +
-                     ' position-absolute';
+    icon.className = (show ? 'fa fa-eye-slash' : 'fa fa-eye') + ' position-absolute';
 }
 
 
 /* ─────────────────────────────────────────────────────────
-   11. PASSWORD SHOW/HIDE toggles in the form modal
+   14. PASSWORD SHOW/HIDE toggles in the form modal
    ───────────────────────────────────────────────────────── */
 function initPwToggles() {
-    document.getElementById('pwToggle1').addEventListener('click', () => {
-        const inp  = document.getElementById('uPassword');
-        const icon = document.getElementById('pwIcon1');
-        const show = inp.type === 'password';
-        inp.type       = show ? 'text' : 'password';
-        icon.className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
-    });
-    document.getElementById('pwToggle2').addEventListener('click', () => {
-        const inp  = document.getElementById('uConfirmPassword');
-        const icon = document.getElementById('pwIcon2');
-        const show = inp.type === 'password';
-        inp.type       = show ? 'text' : 'password';
-        icon.className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
+    const pairs = [
+        { toggleId: 'pwToggle1', inputId: 'uPassword',        iconId: 'pwIcon1' },
+        { toggleId: 'pwToggle2', inputId: 'uConfirmPassword',  iconId: 'pwIcon2' }
+    ];
+    pairs.forEach(({ toggleId, inputId, iconId }) => {
+        const btn = document.getElementById(toggleId);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            const inp  = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!inp || !icon) return;
+            const show     = inp.type === 'password';
+            inp.type       = show ? 'text' : 'password';
+            icon.className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
+        });
     });
 }
 

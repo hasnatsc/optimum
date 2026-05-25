@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ═══════════════════════════════════════════════════════════
+       HEAD  (assembled from fragments/head :: commonHead)
+       ═══════════════════════════════════════════════════════════ -->
+  <meta charset="UTF-8">
+  <title>Production Orders</title>
+  <link rel="icon" type="image/png" href="/img/favicon.svg">
+  <meta name="_csrf"        content="">
+  <meta name="_csrf_header" content="X-CSRF-TOKEN">
+
+  <!-- Stylesheets -->
+  <link href="/css/app.min.css"                              rel="stylesheet"/>
+  <link href="/css/vendor.min.css"                           rel="stylesheet"/>
+  <link href="/css/application.css"                          rel="stylesheet"/>
+  <link href="/css/dataTables/dataTables.bootstrap5.min.css" rel="stylesheet"/>
+  <link href="/css/dataTables/responsive.bootstrap5.min.css" rel="stylesheet"/>
+  <link href="/css/plugins/select2.min.css"                  rel="stylesheet"/>
+  <link href="/css/plugins/bootstrap-datepicker.min.css"     rel="stylesheet"/>
+  <link href="/css/plugins/bootstrap-datetimepicker.min.css" rel="stylesheet"/>
+
+  <!-- Core scripts (load before body so App is available for top-menu patch) -->
+  <script src="/js/app.min.js"></script>
+  <script src="/js/vendor.min.js"></script>
+  <script src="/js/dataTables/dataTables.min.js"></script>
+  <script src="/js/dataTables/dataTables.bootstrap5.min.js"></script>
+  <script src="/js/dataTables/dataTables.responsive.min.js"></script>
+  <script src="/js/dataTables/responsive.bootstrap5.min.js"></script>
+  <script src="/js/dataTables/table-manage-default.demo.js"></script>
+  <script src="/js/dataTables/highlight.min.js"></script>
+  <script src="/js/dataTables/render.highlight.js"></script>
+  <script src="/js/plugins/select2.min.js"></script>
+  <script src="/js/plugins/bootstrap-datepicker.js"></script>
+  <script src="/js/plugins/bootstrap-datetimepicker.min.js"></script>
+  <script src="/js/plugins/moment.min.js"></script>
+  <script src="/js/plugins/sweetalert.js"></script>
+  <script src="/js/plugins/parsley.min.js"></script>
+  <script src="/js/application.js"></script>
+</head>
+
+<body>
+
+<!-- App Loader -->
+<div id="loader" class="app-loader"><span class="spinner"></span></div>
+
+<div id="app" class="app app-header-fixed app-sidebar-fixed app-without-sidebar app-with-top-menu">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TOP MENU HEADER  (fragments/topMenuHeader :: topMenuHeader)
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="topMenuHeader" class="app-header">
+
+    <div class="navbar-header">
+      <a href="/dashboard" class="navbar-brand">
+        <span class="navbar-logo"></span> <b class="me-3px">Spindles</b> ERP
+      </a>
+      <button type="button" class="navbar-mobile-toggler" data-toggle="app-top-menu-mobile">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+
+    <div class="navbar-nav">
+
+      <!-- Context Switchers -->
+      <div class="navbar-item dropdown" id="contextSwitchers">
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-sm btn-outline-theme dropdown-toggle" type="button"
+                  id="orgDropdown" data-bs-toggle="dropdown">
+            <i class="fa fa-building"></i>
+            <span id="currentOrgName">Select Organization</span>
+          </button>
+          <ul class="dropdown-menu" id="orgList">
+            <li><a class="dropdown-item disabled">Loading...</a></li>
+          </ul>
+        </div>
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-sm btn-outline-theme dropdown-toggle" type="button"
+                  id="buDropdown" data-bs-toggle="dropdown">
+            <i class="fa fa-briefcase"></i>
+            <span id="currentBuName">Select Business Unit</span>
+          </button>
+          <ul class="dropdown-menu" id="buList">
+            <li><a class="dropdown-item disabled">Loading...</a></li>
+          </ul>
+        </div>
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-sm btn-outline-theme dropdown-toggle" type="button"
+                  id="ccDropdown" data-bs-toggle="dropdown">
+            <i class="fa fa-chart-pie"></i>
+            <span id="currentCcName">Select Cost Center</span>
+          </button>
+          <ul class="dropdown-menu" id="ccList">
+            <li><a class="dropdown-item disabled">Loading...</a></li>
+          </ul>
+        </div>
+        <div class="dropdown d-inline-block me-2">
+          <button class="btn btn-sm btn-outline-theme dropdown-toggle" type="button"
+                  id="whDropdown" data-bs-toggle="dropdown">
+            <i class="fa fa-warehouse"></i>
+            <span id="currentWhName">Select Warehouse</span>
+          </button>
+          <ul class="dropdown-menu" id="whList">
+            <li><a class="dropdown-item disabled">Loading...</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="navbar-item navbar-form">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Enter keyword"/>
+          <button type="button" class="btn btn-search"><i class="fa fa-search"></i></button>
+        </div>
+      </div>
+
+      <div class="navbar-item dropdown">
+        <a href="#" data-bs-toggle="dropdown" class="navbar-link dropdown-toggle icon">
+          <i class="fa fa-bell"></i><span class="badge">5</span>
+        </a>
+        <div class="dropdown-menu media-list dropdown-menu-end">
+          <div class="dropdown-header">NOTIFICATIONS (5)</div>
+          <a href="javascript:;" class="dropdown-item media">
+            <div class="media-left"><i class="fa fa-bug media-object bg-gray-500"></i></div>
+            <div class="media-body">
+              <h6 class="media-heading">Server Error Reports <i class="fa fa-exclamation-circle text-danger"></i></h6>
+              <div class="text-muted fs-10px">3 minutes ago</div>
+            </div>
+          </a>
+          <div class="dropdown-footer text-center">
+            <a href="javascript:;" class="text-decoration-none">View more</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-item navbar-user dropdown">
+        <a href="#" class="navbar-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown">
+          <img src="/img/user/user-13.jpg" alt="User">
+          <span><span class="d-none d-md-inline">superadmin</span><b class="caret"></b></span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end me-1">
+          <a href="/profile"  class="dropdown-item">Edit Profile</a>
+          <a href="/inbox"    class="dropdown-item d-flex align-items-center">
+            Inbox <span class="badge bg-danger rounded-pill ms-auto pb-4px">2</span>
+          </a>
+          <a href="/calendar" class="dropdown-item">Calendar</a>
+          <a href="javascript:;" class="dropdown-item" id="changePasswordBtn">Change Password</a>
+          <div class="dropdown-divider"></div>
+          <form action="/logout" method="post" style="display:inline;">
+            <input type="hidden" name="_csrf" value="">
+            <button type="submit" class="dropdown-item">Log Out</button>
+          </form>
+        </div>
+      </div>
+    </div><!-- /navbar-nav -->
+  </div><!-- /topMenuHeader -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TOP MENU  (fragments/topMenu :: topMenu)
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="top-menu" class="app-top-menu" data-bs-theme="dark">
+    <div class="menu" id="dynamic-top-menu">
+      <div class="menu-loading text-center py-4" id="menuLoader">
+        <div class="spinner-border text-light" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="text-light mt-2">Loading menu…</div>
+      </div>
+      <div class="menu-item menu-control menu-control-start">
+        <a href="javascript:;" class="menu-link" data-toggle="app-top-menu-prev">
+          <i class="fa fa-angle-left"></i>
+        </a>
+      </div>
+      <div class="menu-item menu-control menu-control-end">
+        <a href="javascript:;" class="menu-link" data-toggle="app-top-menu-next">
+          <i class="fa fa-angle-right"></i>
+        </a>
+      </div>
+    </div>
+  </div><!-- /top-menu -->
+
+
+  <!-- Sidebar mobile backdrop -->
+  <div class="app-sidebar-mobile-backdrop">
+    <a href="#" data-dismiss="app-sidebar-mobile" class="stretched-link"></a>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PAGE CONTENT
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="content" class="app-content">
+
+    <ol class="breadcrumb float-xl-end">
+      <li class="breadcrumb-item"><a href="javascript:;">Home</a></li>
+      <li class="breadcrumb-item"><a href="javascript:;">Production</a></li>
+      <li class="breadcrumb-item active">Production Orders</li>
+    </ol>
+
+    <h1 class="page-header">
+      Production Orders <small>plan &amp; track yarn production lifecycle</small>
+    </h1>
+
+    <!-- Workflow Banner -->
+    <div class="alert alert-light border mb-3 py-2 px-3">
+      <small class="fw-semibold text-muted me-2">Workflow:</small>
+      <span class="badge bg-secondary me-1">DRAFT</span>
+      <i class="fa fa-arrow-right text-muted me-1 small"></i>
+      <span class="badge bg-warning text-dark me-1">SUBMITTED</span>
+      <i class="fa fa-arrow-right text-muted me-1 small"></i>
+      <span class="badge bg-success me-1">APPROVED</span>
+      <i class="fa fa-arrow-right text-muted me-1 small"></i>
+      <span class="badge bg-primary me-1">RELEASED</span>
+      <i class="fa fa-arrow-right text-muted me-1 small"></i>
+      <span class="badge bg-info text-dark me-1">IN PROGRESS</span>
+      <i class="fa fa-arrow-right text-muted me-1 small"></i>
+      <span class="badge bg-success me-3">COMPLETED</span>
+      <span class="text-muted me-1">|</span>
+      <span class="badge bg-danger ms-2 me-1">REJECTED</span>
+      <span class="badge bg-dark me-1">CANCELLED</span>
+    </div>
+
+    <!-- Main Panel -->
+    <div class="panel panel-inverse">
+      <div class="panel-heading">
+        <div class="panel-title">
+          <a href="javascript:;" onclick="openCreateModal()">
+            <span class="badge btn btn-outline-success">
+              <i class="fa fa-plus me-1"></i> Create Production Order
+            </span>
+          </a>
+        </div>
+        <div class="panel-heading-btn">
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-default" data-toggle="panel-expand">
+            <i class="fa fa-expand"></i>
+          </a>
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-success" data-toggle="panel-reload">
+            <i class="fa fa-redo"></i>
+          </a>
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-warning" data-toggle="panel-collapse">
+            <i class="fa fa-minus"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Status Filter -->
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Status Filter</label>
+            <select id="statusFilter" class="form-select">
+              <option value="">All Statuses</option>
+              <option value="DRAFT">Draft</option>
+              <option value="SUBMITTED">Submitted</option>
+              <option value="APPROVED">Approved</option>
+              <option value="RELEASED">Released</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DataTable
+             Columns mirror ProductionOrderServiceImpl.datatableList() row map keys:
+             sl, order_no, yarn_product, planned_start_date, planned_end_date,
+             actual_start_date, planned_qty, produced_qty, waste_qty,
+             status, approval_status, actions
+        -->
+        <table id="poTable" width="100%"
+               class="table table-striped table-bordered align-middle text-nowrap dataTable dtr-inline">
+          <thead>
+          <tr>
+            <th width="1%">SL</th>
+            <th>Order No</th>
+            <th>Yarn Product</th>
+            <th>Planned Start</th>
+            <th>Planned End</th>
+            <th>Actual Start</th>
+            <th class="text-end">Planned (KG)</th>
+            <th class="text-end">Produced (KG)</th>
+            <th class="text-end">Waste (KG)</th>
+            <th>Status</th>
+            <th>Approval</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div><!-- /panel-body -->
+    </div><!-- /panel -->
+
+  </div><!-- /app-content -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MODAL — CREATE / EDIT
+       (production/production-order-form :: modalForm)
+       ═══════════════════════════════════════════════════════════ -->
+  <div tabindex="-1" aria-hidden="true" id="poModal" class="modal fade">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="poModalLabel">
+            <i class="fa fa-industry text-success me-2"></i>Production Order Form
+          </h5>
+          <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="hs-box">
+            <form id="poForm" data-parsley-validate="true">
+              <input type="hidden" id="poId">
+
+              <!-- ── Basic Information ─────────────────────────── -->
+              <div class="row g-3">
+                <div class="col-12">
+                  <h6 class="text-primary mb-0">
+                    <i class="fa fa-info-circle me-1"></i>Basic Information
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Order No</label>
+                  <input type="text" class="form-control bg-light" id="poOrderNo"
+                         name="orderNo" readonly placeholder="Auto-generated">
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Planned Start Date <span class="text-danger">*</span>
+                  </label>
+                  <input type="date" class="form-control" id="poPlannedStartDate"
+                         name="plannedStartDate" required data-parsley-required="true">
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Planned End Date</label>
+                  <input type="date" class="form-control" id="poPlannedEndDate"
+                         name="plannedEndDate">
+                </div>
+
+                <!-- ── Source Document ──────────────────────────── -->
+                <div class="col-12">
+                  <h6 class="text-info mb-0 mt-1">
+                    <i class="fa fa-file-contract me-1"></i>Source Document (PI / SO)
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">
+                    PI / SO <span class="text-danger">*</span>
+                  </label>
+                  <!-- FIX: id kept consistent; parsley required attr added -->
+                  <select class="form-select" id="poOrderManagementId"
+                          name="orderManagementId"
+                          required
+                          data-parsley-required="true"
+                          data-parsley-errors-container="#poOrderManagementIdError">
+                  </select>
+                  <div id="poOrderManagementIdError"></div>
+                </div>
+
+                <!-- ── Yarn Product ─────────────────────────────── -->
+                <div class="col-12">
+                  <h6 class="text-success mb-0 mt-1">
+                    <i class="fa fa-cube me-1"></i>Yarn Product
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">
+                    Yarn Product <span class="text-danger">*</span>
+                  </label>
+                  <select class="form-select" id="poYarnProductId"
+                          name="yarnProductId"
+                          required
+                          data-parsley-required="true"
+                          data-parsley-errors-container="#poYarnProductIdError">
+                  </select>
+                  <div id="poYarnProductIdError"></div>
+                </div>
+
+                <!-- ── Quantities ───────────────────────────────── -->
+                <div class="col-12">
+                  <h6 class="text-warning mb-0 mt-1">
+                    <i class="fa fa-balance-scale me-1"></i>Quantities (KG)
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">
+                    Planned Qty (KG) <span class="text-danger">*</span>
+                  </label>
+                  <input type="number" step="0.001" min="0.001"
+                         class="form-control" id="poPlannedQuantity"
+                         name="plannedQuantity"
+                         required
+                         data-parsley-required="true"
+                         data-parsley-min="0.001"
+                         placeholder="0.000">
+                </div>
+
+                <!-- ── Remarks ──────────────────────────────────── -->
+                <div class="col-12">
+                  <label class="form-label">Remarks</label>
+                  <textarea class="form-control" id="poRemarks" name="remarks"
+                            rows="2" placeholder="Optional remarks…"></textarea>
+                </div>
+              </div><!-- /row -->
+            </form>
+          </div>
+        </div><!-- /modal-body -->
+
+        <div class="modal-footer">
+          <button type="button" data-bs-dismiss="modal" class="btn btn-white">Close</button>
+          <button type="submit" form="poForm" id="poSubmitBtn" class="btn btn-success">
+            <span id="poSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+            <span id="poBtnText">Save</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /poModal -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MODAL — VIEW
+       (production/production-order-view :: modalView)
+       ═══════════════════════════════════════════════════════════ -->
+  <div tabindex="-1" aria-hidden="true" id="poModalShow" class="modal fade">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fa fa-industry text-success me-2"></i>Production Order Details
+          </h5>
+          <button type="button" data-bs-dismiss="modal" class="btn-close" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="hs-box">
+
+            <!-- Status Banner -->
+            <div class="alert alert-info text-center mb-3 py-2">
+              <strong id="poView_orderNo">—</strong>
+              <span id="poView_statusBadge"   class="badge bg-secondary ms-2">—</span>
+              <span id="poView_approvalBadge" class="badge bg-warning text-dark ms-1">—</span>
+            </div>
+
+            <div class="row g-3">
+
+              <!-- Basic Information -->
+              <div class="col-12">
+                <h6 class="text-primary mb-0">
+                  <i class="fa fa-info-circle me-1"></i>Basic Information
+                </h6>
+                <hr class="mt-1 mb-0">
+              </div>
+
+              <div class="col-md-3 view-group">
+                <label class="view-label">Planned Start</label>
+                <span id="poView_plannedStart" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-3 view-group">
+                <label class="view-label">Planned End</label>
+                <span id="poView_plannedEnd" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-3 view-group">
+                <label class="view-label">Actual Start</label>
+                <span id="poView_actualStart" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-3 view-group">
+                <label class="view-label">Actual End</label>
+                <span id="poView_actualEnd" class="form-control hs_span_show"></span>
+              </div>
+
+              <!-- Yarn Product -->
+              <div class="col-12">
+                <h6 class="text-info mb-0 mt-1">
+                  <i class="fa fa-cube me-1"></i>Yarn Product
+                </h6>
+                <hr class="mt-1 mb-0">
+              </div>
+
+              <div class="col-md-3 view-group">
+                <label class="view-label">Product Code</label>
+                <span id="poView_yarnCode" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-9 view-group">
+                <label class="view-label">Product Name</label>
+                <span id="poView_yarnName" class="form-control hs_span_show"></span>
+              </div>
+
+              <!-- Quantities & Progress -->
+              <div class="col-12">
+                <h6 class="text-success mb-0 mt-1">
+                  <i class="fa fa-balance-scale me-1"></i>Quantities (KG)
+                </h6>
+                <hr class="mt-1 mb-0">
+              </div>
+
+              <div class="col-md-4">
+                <div class="border rounded p-2 text-center">
+                  <div class="text-muted small">Planned (KG)</div>
+                  <div class="fs-5 fw-bold text-primary" id="poView_planned">—</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="border rounded p-2 text-center">
+                  <div class="text-muted small">Produced (KG)</div>
+                  <div class="fs-5 fw-bold text-success" id="poView_produced">—</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="border rounded p-2 text-center">
+                  <div class="text-muted small">Waste (KG)</div>
+                  <div class="fs-5 fw-bold text-danger" id="poView_waste">—</div>
+                </div>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="col-12">
+                <label class="form-label text-muted mb-1">
+                  Production Progress
+                  <span id="poView_progressPct" class="ms-1 fw-semibold text-success"></span>
+                </label>
+                <div class="progress" style="height:14px; border-radius:7px;">
+                  <div id="poView_progressBar"
+                       class="progress-bar progress-bar-striped bg-success"
+                       role="progressbar"
+                       style="width:0%; border-radius:7px;"
+                       aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Remarks -->
+              <div class="col-12 view-group">
+                <label class="view-label">Remarks</label>
+                <span id="poView_remarks" class="form-control hs_span_show"></span>
+              </div>
+
+              <!-- Audit -->
+              <div class="col-12">
+                <hr class="mt-1 mb-2">
+                <small class="text-muted">
+                  Created by: <strong id="poView_createdBy"></strong>
+                  &nbsp;|&nbsp; at: <span id="poView_createdAt"></span>
+                  &nbsp;&nbsp;&nbsp;
+                  Updated by: <strong id="poView_updatedBy"></strong>
+                  &nbsp;|&nbsp; at: <span id="poView_updatedAt"></span>
+                </small>
+              </div>
+
+            </div><!-- /row -->
+          </div><!-- /hs-box -->
+        </div><!-- /modal-body -->
+
+        <div class="modal-footer">
+          <button type="button" data-bs-dismiss="modal" class="btn btn-white">Close</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /poModalShow -->
+
+
+</div><!-- /app -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     CONSOLIDATED SCRIPTS
+     One block — no more scattered <script> tags across multiple <div>s.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────────────────────
+   0.  FALLBACK HELPERS
+   These are normally provided by application.js.
+   Defined here only as safety guards so the page works
+   even in isolation (e.g. local testing).
+   ───────────────────────────────────────────────────────────── */
+if (typeof nullCheck === 'undefined') {
+    window.nullCheck = v => (v != null && v !== '') ? v : '—';
+}
+if (typeof hsDisableButton === 'undefined') {
+    window.hsDisableButton = (btn, spin, txt) => {
+        btn.disabled = true;
+        spin.classList.remove('d-none');
+        txt.textContent = 'Saving…';
+    };
+}
+if (typeof hsEnableButton === 'undefined') {
+    window.hsEnableButton = (btn, spin, txt) => {
+        btn.disabled = false;
+        spin.classList.add('d-none');
+        txt.textContent = 'Save';
+    };
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   1.  TOP MENU — dynamic load + App.initTopMenu() patch
+   (identical logic from fragments/topMenu :: topMenu)
+   ───────────────────────────────────────────────────────────── */
+(function () {
+    function patchApp() {
+        if (typeof App !== 'undefined' && typeof App.initTopMenu === 'function') {
+            window.__realInitTopMenu = App.initTopMenu.bind(App);
+            App.initTopMenu = function () { /* deferred until dynamic render completes */ };
+            return true;
+        }
+        return false;
+    }
+    if (!patchApp()) {
+        document.addEventListener('DOMContentLoaded', patchApp, true); // capture = runs first
+    }
+    document.addEventListener('DOMContentLoaded', loadDynamicTopMenu);
+})();
+
+function loadDynamicTopMenu() {
+    secureFetch('/openApi/menus/user-menu')
+        .then(function (data) {
+            if (!data.success) { showTopMenuError(data.message || 'Failed to load menu'); return; }
+            var flat  = (data.menus && data.menus.items) ? data.menus.items : [];
+            var tree  = buildMenuTree(flat);
+            sortMenus(tree);
+            renderTopMenu(tree);
+            expandActiveMenu();
+            var init = window.__realInitTopMenu || (typeof App !== 'undefined' && App.initTopMenu);
+            // FIX: App.initTopMenu() queries '.menu-item:not(.menu-control)' which is
+            // null before items render → "t is null / querySelectorAll" crash.
+            // Swallow the error so the page keeps working even if init fails.
+            if (typeof init === 'function') {
+                try { init(); }
+                catch (e) { console.warn('[TopMenu] App.initTopMenu() skipped:', e.message); }
+            }
+        })
+        .catch(function (err) {
+            console.error('Top menu load error:', err);
+            showTopMenuError('Failed to load top menu.');
+        });
+}
+
+function buildMenuTree(flat) {
+    var map = {}, roots = [];
+    flat.forEach(function (m) { m.subMenus = []; map[m.id] = m; });
+    flat.forEach(function (m) {
+        m.parentMenuId && map[m.parentMenuId]
+            ? map[m.parentMenuId].subMenus.push(m)
+            : roots.push(m);
+    });
+    return roots;
+}
+function sortMenus(menus) {
+    menus.sort(function (a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+    menus.forEach(function (m) { if (m.subMenus && m.subMenus.length) sortMenus(m.subMenus); });
+}
+function renderTopMenu(modules) {
+    var container = document.getElementById('dynamic-top-menu');
+    if (!container) return;
+    var loader = document.getElementById('menuLoader');
+    if (loader) loader.remove();
+    container.querySelectorAll('.menu-item:not(.menu-control)').forEach(function (el) { el.remove(); });
+    var anchor = container.querySelector('.menu-control-start');
+    modules.forEach(function (mod) {
+        var el = buildModuleEl(mod);
+        anchor ? container.insertBefore(el, anchor) : container.appendChild(el);
+    });
+}
+function buildModuleEl(mod) {
+    var item = document.createElement('div');
+    item.className = 'menu-item has-sub';
+    item.innerHTML =
+        '<a href="javascript:;" class="menu-link">' +
+        '<div class="menu-icon"><i class="' + (mod.icon || 'fa fa-layer-group') + '"></i></div>' +
+        '<div class="menu-text">' + escHtml(mod.menuName) + '</div>' +
+        '<div class="menu-caret"></div>' +
+        '</a><div class="menu-submenu"></div>';
+    var sub = item.querySelector('.menu-submenu');
+    (mod.subMenus || []).forEach(function (g) { sub.appendChild(buildGroupEl(g)); });
+    return item;
+}
+function buildGroupEl(group) {
+    var item = document.createElement('div');
+    item.className = 'menu-item has-sub';
+    item.innerHTML =
+        '<a href="javascript:;" class="menu-link">' +
+        '<div class="menu-text">' + escHtml(group.menuName) + '</div>' +
+        '<div class="menu-caret"></div>' +
+        '</a><div class="menu-submenu"></div>';
+    var sub = item.querySelector('.menu-submenu');
+    (group.subMenus || []).forEach(function (m) { sub.appendChild(buildLeafEl(m)); });
+    return item;
+}
+function buildLeafEl(menu) {
+    var item = document.createElement('div');
+    var isActive = menu.menuUrl && window.location.pathname === menu.menuUrl;
+    item.className = 'menu-item' + (isActive ? ' active' : '');
+    item.innerHTML =
+        '<a href="' + (menu.menuUrl || '#') + '" class="menu-link"' +
+        ' target="' + (menu.target || '_self') + '">' +
+        '<div class="menu-text">' + escHtml(menu.menuName) + '</div>' +
+        '</a>';
+    return item;
+}
+function expandActiveMenu() {
+    var active = document.querySelector('#dynamic-top-menu .menu-item.active');
+    if (!active) return;
+    var p = active.parentElement;
+    while (p && p.id !== 'dynamic-top-menu') {
+        if (p.classList && p.classList.contains('menu-item')) p.classList.add('open');
+        p = p.parentElement;
+    }
+}
+function showTopMenuError(msg) {
+    var loader = document.getElementById('menuLoader');
+    if (loader) loader.innerHTML =
+        '<div class="alert alert-danger m-3"><i class="fa fa-exclamation-triangle"></i> ' +
+        escHtml(msg) + '</div>';
+}
+function escHtml(text) {
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text ? text.replace(/[&<>"']/g, function (c) { return map[c]; }) : '';
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   2.  CONTEXT SWITCHERS
+   (from topMenuHeader script block)
+   ───────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    const csrfToken  = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    let ctx = {};
+
+    function loadContext() {
+        secureFetch('/user-context/allowed/context')
+            .then(data => { ctx = data.current || {}; renderCtx(ctx); renderDropdowns(data); })
+            .catch(e => console.error('Context load failed', e));
+    }
+    function renderCtx(c) {
+        setText('currentOrgName', c.organizationName || 'Select Organization');
+        setText('currentBuName',  c.businessUnitName || 'Select Business Unit');
+        setText('currentCcName',  c.costCenterName   || 'Select Cost Center');
+        setText('currentWhName',  c.warehouseName    || 'Select Warehouse');
+    }
+    function renderDropdowns(data) {
+        renderList('orgList', data.organizations, ctx.organizationId, switchOrg);
+        renderList('buList',  data.businessUnits, ctx.businessUnitId, switchBU);
+        renderList('ccList',  data.costCenters,   ctx.costCenterId,   switchCC);
+        renderList('whList',  data.warehouses,    ctx.warehouseId,    switchWH);
+    }
+    function renderList(listId, items, selectedId, handler) {
+        const ul = document.getElementById(listId);
+        ul.innerHTML = '';
+        if (!items || !items.length) {
+            ul.innerHTML = '<li><a class="dropdown-item disabled">None</a></li>';
+            return;
+        }
+        items.forEach(i => {
+            const a  = document.createElement('a');
+            a.className = 'dropdown-item';
+            a.href = '#';
+            a.innerHTML = i.code + ' — ' + i.name +
+                (i.id === selectedId ? ' <i class="fa fa-check text-success"></i>' : '');
+            a.onclick = () => handler(i.id);
+            const li = document.createElement('li');
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+    }
+    function switchOrg(id) { doSwitch('/user-context/switch/organization/'  + id); }
+    function switchBU(id)  { doSwitch('/user-context/switch/business-unit/' + id); }
+    function switchCC(id)  { doSwitch('/user-context/switch/cost-center/'   + id); }
+    function switchWH(id)  { doSwitch('/user-context/switch/warehouse/'     + id); }
+    function doSwitch(url) {
+        secureFetch(url, { method: 'POST', headers: { [csrfHeader]: csrfToken } })
+            .then(res => {
+                if (res.success) { toast('Success', res.message, 'success'); loadContext(); }
+                else             { toast('Error',   res.message, 'error'); }
+            })
+            .catch(() => toast('Error', 'Request failed', 'error'));
+    }
+    function setText(id, txt) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = txt;
+    }
+    function toast(title, msg, type) {
+        if (window.Swal) {
+            Swal.fire({ icon: type, title, text: msg, toast: true,
+                        position: 'top-end', timer: 2500, showConfirmButton: false });
+        }
+    }
+    loadContext();
+});
+
+
+/* ─────────────────────────────────────────────────────────────
+   3.  CHANGE PASSWORD  (navbar action)
+   ───────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('changePasswordBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        const csrfToken  = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+        Swal.fire({
+            title: 'Change Password',
+            html: `
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+                    <div style="position:relative;">
+                        <input type="password" id="swNewPwd" placeholder="New Password"
+                            style="width:100%;padding:12px 40px 12px 15px;border-radius:8px;border:1px solid #ccc;font-size:14px;">
+                        <i class="fa fa-eye" id="togNewPwd"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:#666;"></i>
+                    </div>
+                    <div style="position:relative;">
+                        <input type="password" id="swConfPwd" placeholder="Confirm Password"
+                            style="width:100%;padding:12px 40px 12px 15px;border-radius:8px;border:1px solid #ccc;font-size:14px;">
+                        <i class="fa fa-eye" id="togConfPwd"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:#666;"></i>
+                    </div>
+                </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Update',
+            focusConfirm: false,
+            didOpen: () => {
+                document.getElementById('togNewPwd').addEventListener('click', () => {
+                    const el = document.getElementById('swNewPwd');
+                    el.type = el.type === 'password' ? 'text' : 'password';
+                });
+                document.getElementById('togConfPwd').addEventListener('click', () => {
+                    const el = document.getElementById('swConfPwd');
+                    el.type = el.type === 'password' ? 'text' : 'password';
+                });
+            },
+            preConfirm: () => {
+                const p1 = document.getElementById('swNewPwd').value;
+                const p2 = document.getElementById('swConfPwd').value;
+                if (!p1 || !p2)      { Swal.showValidationMessage('All fields required'); return false; }
+                if (p1.length < 6)   { Swal.showValidationMessage('Minimum 6 characters'); return false; }
+                if (p1 !== p2)       { Swal.showValidationMessage('Passwords do not match'); return false; }
+                return p1;
+            }
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            fetch('/openApi/menus/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ password: r.value })
+            })
+            .then(res => { if (!res.ok) throw new Error(res.status); return res.json(); })
+            .then(() => Swal.fire('Success', 'Password updated', 'success'))
+            .catch(() => Swal.fire('Error', 'Update failed', 'error'));
+        });
+    });
+});
+
+
+/* ─────────────────────────────────────────────────────────────
+   4.  DATATABLE
+   Columns map exactly to ProductionOrderServiceImpl.datatableList()
+   row keys: sl, order_no, yarn_product, planned_start_date,
+   planned_end_date, actual_start_date, planned_qty, produced_qty,
+   waste_qty, status, approval_status, actions
+   ───────────────────────────────────────────────────────────── */
+let poDT;   // DataTable instance — single authoritative reference
+
+document.addEventListener('DOMContentLoaded', function () {
+    poDT = $('#poTable').DataTable({
+        processing:  true,
+        responsive:  true,
+        serverSide:  true,
+        ajax: {
+            url:  '/production-orders/list',
+            type: 'GET',
+            data: function (d) {
+                d.statusFilter = document.getElementById('statusFilter').value;
+            }
+        },
+        columns: [
+            { data: 'sl',                  orderable: false, width: '3%'  },
+            { data: 'order_no'                                             },
+            { data: 'yarn_product'                                         },
+            { data: 'planned_start_date'                                   },
+            { data: 'planned_end_date'                                     },
+            { data: 'actual_start_date'                                    },
+            { data: 'planned_qty',         className: 'text-end'          },
+            { data: 'produced_qty',        className: 'text-end'          },
+            { data: 'waste_qty',           className: 'text-end'          },
+            { data: 'status',              orderable: false                },
+            { data: 'approval_status',     orderable: false                },  // FIX: was missing
+            { data: 'actions',             orderable: false                }
+        ]
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', function () {
+        poDT.ajax.reload();
+    });
+});
+
+
+/* ─────────────────────────────────────────────────────────────
+   5.  SELECT2 HELPERS
+   ───────────────────────────────────────────────────────────── */
+
+/**
+ * PI / SO  (orderManagement) select2
+ * @param {{ id: number, text: string }|null} preselect  — for edit mode
+ */
+function initOrderManagementSelect(preselect) {
+    const $sel = $('#poOrderManagementId');
+    if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+
+    $sel.select2({
+        dropdownParent:    $('#poModal'),
+        width:             '100%',
+        placeholder:       '— Search PI / SO —',
+        allowClear:        true,
+        minimumInputLength: 0,
+        ajax: {
+            url:       '/production-orders/order_managements/search',
+            dataType:  'json',
+            delay:     250,
+            data:      params => ({ search: params.term || '' }),
+            processResults: data => ({
+                results: (data || []).map(om => ({
+                    id:          om.id,
+                    text:        om.text,
+                    documentNo:  om.documentNo,
+                    partyName:   om.partyName
+                }))
+            }),
+            cache: true
+        },
+        templateResult: function (repo) {
+            if (repo.loading) return repo.text;
+            return $(`<div>
+                <strong>${nullCheck(repo.documentNo)}</strong>
+                <small class="text-muted d-block">${nullCheck(repo.partyName)}</small>
+                <small class="text-muted d-block">${nullCheck(repo.text)}</small>
+            </div>`);
+        },
+        templateSelection: repo => repo.text || repo.id
+    });
+
+    if (preselect && preselect.id && preselect.text) {
+        $sel.append(new Option(preselect.text, preselect.id, true, true)).trigger('change');
+    }
+}
+
+/**
+ * Yarn Product select2
+ * @param {{ yarnProductId: number, yarnProductName: string }|null} preselect
+ */
+function initYarnProductSelect(preselect) {
+    const $sel = $('#poYarnProductId');
+    if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+
+    $sel.select2({
+        dropdownParent:    $('#poModal'),
+        width:             '100%',
+        placeholder:       '— Search Yarn Product —',
+        allowClear:        true,
+        minimumInputLength: 0,
+        ajax: {
+            url:      '/production-orders/yarn-products/search',
+            dataType: 'json',
+            delay:    250,
+            data: params => ({
+                orderManagementId: $('#poOrderManagementId').val() || null,
+                search: params.term || '',
+                page:   params.page || 1
+            }),
+            processResults: (data, params) => ({
+                results: (data.items || []).map(yp => ({
+                    id:          yp.id,
+                    text:        yp.text,
+                    quantity:    yp.quantity,
+                    productCode: yp.productCode,
+                    productName: yp.productName
+                })),
+                pagination: { more: data.hasMore || false }
+            }),
+            cache: true
+        },
+        templateResult: function (repo) {
+            if (repo.loading) return repo.text;
+            return $(`<div>
+                <strong>${nullCheck(repo.text)}</strong>
+                <small class="text-muted ms-2">${nullCheck(repo.quantity)} KG</small>
+            </div>`);
+        },
+        templateSelection: repo => repo.text || repo.id
+    });
+
+    // Auto-fill planned qty when a product is selected
+    $sel.on('select2:select', function (e) {
+        const qty = e.params.data.quantity;
+        if (qty) document.getElementById('poPlannedQuantity').value = qty;
+    });
+
+    // Edit mode preselect — FIX: use yarnProductName (not code) as display text
+    if (preselect && preselect.yarnProductId) {
+        const displayText = preselect.yarnProductName || preselect.yarnProductCode || preselect.yarnProductId;
+        $sel.append(new Option(displayText, preselect.yarnProductId, true, true)).trigger('change');
+    }
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   6.  FORM — RESET
+   ───────────────────────────────────────────────────────────── */
+function poResetForm() {
+    document.getElementById('poForm').reset();
+    document.getElementById('poId').value = '';
+
+    const $om = $('#poOrderManagementId');
+    if ($om.hasClass('select2-hidden-accessible')) $om.val(null).trigger('change');
+
+    const $yp = $('#poYarnProductId');
+    if ($yp.hasClass('select2-hidden-accessible')) $yp.val(null).trigger('change');
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   7.  OPEN CREATE MODAL
+   ───────────────────────────────────────────────────────────── */
+function openCreateModal() {
+    poResetForm();
+    document.getElementById('poModalLabel').innerHTML =
+        '<i class="fa fa-industry text-success me-2"></i>Create Production Order';
+    document.getElementById('poPlannedStartDate').value = new Date().toISOString().split('T')[0];
+
+    // Re-initialise select2 controls for a clean blank state
+    initOrderManagementSelect(null);
+    initYarnProductSelect(null);
+
+    // Fetch auto-generated order number
+    secureFetch('/production-orders/generate-number')
+        .then(data => {
+            if (data.success) document.getElementById('poOrderNo').value = data.orderNo;
+        });
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('poModal')).show();
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   8.  FORM SUBMIT
+   ───────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    const form      = document.getElementById('poForm');
+    const submitBtn = document.getElementById('poSubmitBtn');
+    const spinner   = document.getElementById('poSpinner');
+    const btnText   = document.getElementById('poBtnText');
+
+    // Initialise select2 on first DOMContentLoaded
+    // (destroyed & re-created on each openCreateModal / dataEdit call)
+    initOrderManagementSelect(null);
+    initYarnProductSelect(null);
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        if (!$(form).parsley().isValid()) return;
+
+        // FIX: Guard against NaN — validate select values before parseInt/parseFloat
+        const omVal = $('#poOrderManagementId').val();
+        const ypVal = $('#poYarnProductId').val();
+        if (!omVal) { Swal.fire('Validation', 'Please select a PI / SO.', 'warning'); return; }
+        if (!ypVal) { Swal.fire('Validation', 'Please select a Yarn Product.', 'warning'); return; }
+
+        hsDisableButton(submitBtn, spinner, btnText);
+
+        const payload = {
+            id:                 document.getElementById('poId').value || null,
+            orderNo:            document.getElementById('poOrderNo').value,
+            orderManagementId:  parseInt(omVal, 10),
+            yarnProductId:      parseInt(ypVal, 10),
+            plannedQuantity:    parseFloat(document.getElementById('poPlannedQuantity').value),
+            plannedStartDate:   document.getElementById('poPlannedStartDate').value,
+            plannedEndDate:     document.getElementById('poPlannedEndDate').value   || null,
+            remarks:            document.getElementById('poRemarks').value           || null
+        };
+
+        secureFetch('/production-orders/save', { method: 'POST', body: JSON.stringify(payload) })
+            .then(data => {
+                hsEnableButton(submitBtn, spinner, btnText);
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved!', text: data.message,
+                                timer: 2000, showConfirmButton: false });
+                    bootstrap.Modal.getInstance(document.getElementById('poModal')).hide();
+                    poDT.ajax.reload();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error!', text: data.message });
+                }
+            })
+            .catch(err => {
+                hsEnableButton(submitBtn, spinner, btnText);
+                Swal.fire({ icon: 'error', title: 'Error!', text: err.message });
+            });
+    });
+});
+
+
+/* ─────────────────────────────────────────────────────────────
+   9.  ACTION HANDLERS
+   Names MUST match what ProductionOrderServiceImpl.buildActionButtons()
+   emits:  dataShow(id), dataEdit(id), dataDelete(id), doTransition(id,action)
+   ───────────────────────────────────────────────────────────── */
+
+/** View modal */
+function dataShow(id) {
+    secureFetch('/production-orders/show/' + id)
+        .then(data => {
+            if (!data.success) { Swal.fire('Error', data.message, 'error'); return; }
+            populateViewModal(data.obj.defaultData);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('poModalShow')).show();
+        });
+}
+
+/** Edit modal */
+function dataEdit(id) {
+    secureFetch('/production-orders/show/' + id)
+        .then(data => {
+            if (!data.success) { Swal.fire('Error', data.message, 'error'); return; }
+            const po = data.obj.defaultData;
+
+            poResetForm();
+            document.getElementById('poModalLabel').innerHTML =
+                '<i class="fa fa-pen-to-square text-warning me-2"></i>Edit Production Order';
+
+            document.getElementById('poId').value              = po.id              || '';
+            document.getElementById('poOrderNo').value         = po.orderNo         || '';
+            document.getElementById('poPlannedQuantity').value = po.plannedQuantity != null ? po.plannedQuantity : '';
+            document.getElementById('poRemarks').value         = po.remarks         || '';
+
+            // Date parse: server returns dd-MM-yyyy, input needs yyyy-MM-dd
+            function toInputDate(ddmmyyyy) {
+                if (!ddmmyyyy || ddmmyyyy === '—') return '';
+                const p = ddmmyyyy.split('-');
+                return (p.length === 3) ? `${p[2]}-${p[1]}-${p[0]}` : '';
+            }
+            document.getElementById('poPlannedStartDate').value = toInputDate(po.plannedStartDate);
+            document.getElementById('poPlannedEndDate').value   = toInputDate(po.plannedEndDate);
+
+            // FIX: was using po.yarnProductId as the orderManagement select id — now correct
+            initOrderManagementSelect({
+                id:   po.orderManagementId,
+                text: po.orderManagementCode
+            });
+            // FIX: display text uses yarnProductName (not code)
+            initYarnProductSelect({
+                yarnProductId:   po.yarnProductId,
+                yarnProductName: po.yarnProductName
+            });
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('poModal')).show();
+        });
+}
+
+/** Soft delete (DRAFT / REJECTED only — enforced server-side) */
+function dataDelete(id) {
+    confirmAndExecute({
+        title:        'Delete Production Order?',
+        text:         'Only DRAFT or REJECTED orders can be deleted.',
+        icon:         'warning',
+        confirmText:  'Yes, delete!',
+        confirmColor: '#d33',
+        url:          `/production-orders/delete/${id}`,
+        method:       'DELETE',
+        successTitle: 'Deleted!',
+        reloadTable:  true,
+        // FIX: pass the DataTable instance, not the DOM element
+        dataTable:    document.getElementById('poTable')
+    });
+}
+
+/* ─────────────────────────────────────────────────────────────
+   10.  STATUS TRANSITION HANDLER
+   FIX: added missing "recall" action to cfgMap
+   ───────────────────────────────────────────────────────────── */
+function doTransition(id, action) {
+    const cfgMap = {
+        submit:   { title: 'Submit for Approval?',       icon: 'question', btnText: 'Submit',      btnColor: '#f59e0b', requireRemarks: false },
+        recall:   { title: 'Recall from Approval?',      icon: 'warning',  btnText: 'Yes, Recall', btnColor: '#6b7280', requireRemarks: false }, // FIX: was missing
+        approve:  { title: 'Approve Production Order?',  icon: 'question', btnText: 'Approve',     btnColor: '#22c55e', requireRemarks: false },
+        reject:   { title: 'Reject Production Order?',   icon: 'warning',  btnText: 'Reject',      btnColor: '#ef4444', requireRemarks: true  },
+        release:  { title: 'Release to Production?',     icon: 'question', btnText: 'Release',     btnColor: '#3b82f6', requireRemarks: false },
+        start:    { title: 'Start Production?',          icon: 'question', btnText: 'Start',       btnColor: '#06b6d4', requireRemarks: false },
+        complete: { title: 'Mark as Completed?',         icon: 'question', btnText: 'Complete',    btnColor: '#22c55e', requireRemarks: false },
+        cancel:   { title: 'Cancel Production Order?',   icon: 'warning',  btnText: 'Yes, Cancel', btnColor: '#6b7280', requireRemarks: true  }
+    };
+
+    const cfg = cfgMap[action];
+    if (!cfg) { console.warn('Unknown transition action:', action); return; }
+
+    Swal.fire({
+        title:           `<span class="fw-semibold">${cfg.title}</span>`,
+        icon:            cfg.icon,
+        html: `
+            <div class="text-start mt-2">
+                <label for="transitionRemarks" class="form-label fw-semibold mb-1">
+                    Remarks
+                    ${cfg.requireRemarks
+                        ? '<span class="text-danger">*</span>'
+                        : '<span class="text-muted small">(Optional)</span>'}
+                </label>
+                <textarea id="transitionRemarks" class="form-control" rows="4"
+                          placeholder="${cfg.requireRemarks ? 'Remarks are required…' : 'Enter remarks if any…'}"
+                          style="resize:none;"></textarea>
+                <div class="form-text mt-1 ${cfg.requireRemarks ? 'text-danger' : 'text-muted'}">
+                    ${cfg.requireRemarks
+                        ? 'Remarks are mandatory for this action.'
+                        : 'Additional information is optional.'}
+                </div>
+            </div>`,
+        showCancelButton:   true,
+        confirmButtonText:  cfg.btnText,
+        confirmButtonColor: cfg.btnColor,
+        focusConfirm:       false,
+        customClass: {
+            popup:         'rounded-4 shadow',
+            actions:       'gap-3',
+            confirmButton: 'btn btn-primary px-4 ms-2',
+            cancelButton:  'btn btn-outline-secondary px-4'
+        },
+        buttonsStyling: false,
+        preConfirm: () => {
+            const remarks = document.getElementById('transitionRemarks').value.trim();
+            if (cfg.requireRemarks && !remarks) {
+                Swal.showValidationMessage('<i class="fa fa-exclamation-circle me-1"></i> Remarks are required.');
+                return false;
+            }
+            return remarks;
+        }
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        secureFetch(`/production-orders/${action}/${id}`, {
+            method: 'POST',
+            body:   JSON.stringify({ remarks: result.value })
+        })
+        .then(data => {
+            if (data.success) {
+                Swal.fire({ icon: 'success', title: 'Done!', text: data.message,
+                            timer: 2000, showConfirmButton: false });
+                poDT.ajax.reload();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error!', text: data.message });
+            }
+        });
+    });
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   11.  POPULATE VIEW MODAL
+   (was inlined in dataShow — extracted for clarity)
+   ───────────────────────────────────────────────────────────── */
+const STATUS_BADGE_MAP = {
+    DRAFT:       'badge bg-secondary',
+    SUBMITTED:   'badge bg-warning text-dark',
+    APPROVED:    'badge bg-success',
+    RELEASED:    'badge bg-primary',
+    IN_PROGRESS: 'badge bg-info text-dark',
+    COMPLETED:   'badge bg-success fw-bold',
+    REJECTED:    'badge bg-danger',
+    CANCELLED:   'badge bg-dark'
+};
+const APPROVAL_BADGE_MAP = {
+    DRAFT:       'badge bg-secondary',
+    IN_APPROVAL: 'badge bg-primary',
+    APPROVED:    'badge bg-success',
+    REJECTED:    'badge bg-danger',
+    RETURNED:    'badge bg-warning text-dark',
+    CANCELLED:   'badge bg-dark'
+};
+
+function populateViewModal(po) {
+    // Status banner
+    const sb = document.getElementById('poView_statusBadge');
+    sb.textContent = po.statusDisplayName || po.status || '—';
+    sb.className   = STATUS_BADGE_MAP[po.status] || 'badge bg-secondary';
+
+    const ab = document.getElementById('poView_approvalBadge');
+    ab.textContent = po.approvalStatusDisplayName || po.approvalStatus || '—';
+    ab.className   = APPROVAL_BADGE_MAP[po.approvalStatus] || 'badge bg-secondary';
+
+    setText('poView_orderNo',     po.orderNo          || '—');
+
+    // Dates
+    setText('poView_plannedStart', po.plannedStartDate || '—');
+    setText('poView_plannedEnd',   po.plannedEndDate   || '—');
+    setText('poView_actualStart',  po.actualStartDate  || 'Not started');
+    setText('poView_actualEnd',    po.actualEndDate    || 'Not ended');
+
+    // Product
+    setText('poView_yarnCode', po.yarnProductCode || '—');
+    setText('poView_yarnName', po.yarnProductName || '—');
+
+    // Quantities
+    const planned  = parseFloat(po.plannedQuantity  || 0);
+    const produced = parseFloat(po.producedQuantity || 0);
+    const waste    = parseFloat(po.wasteQuantity    || 0);
+    setText('poView_planned',  planned.toFixed(3));
+    setText('poView_produced', produced.toFixed(3));
+    setText('poView_waste',    waste.toFixed(3));
+
+    // Progress bar
+    const pct = planned > 0 ? Math.min((produced / planned) * 100, 100) : 0;
+    const bar = document.getElementById('poView_progressBar');
+    bar.style.width = pct.toFixed(1) + '%';
+    bar.setAttribute('aria-valuenow', pct.toFixed(1));
+    setText('poView_progressPct', pct.toFixed(1) + '%');
+
+    // Remarks & audit
+    setText('poView_remarks',    po.remarks   || '—');
+    setText('poView_createdBy',  po.createdBy || '—');
+    setText('poView_createdAt',  po.createdAt || '—');
+    setText('poView_updatedBy',  po.updatedBy || '—');
+    setText('poView_updatedAt',  po.updatedAt || '—');
+}
+
+/** Utility: set textContent safely */
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+</script>
+
+</body>
+</html>
