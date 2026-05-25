@@ -38,7 +38,7 @@ public class AppMenuController {
     @GetMapping
     @PreAuthorize("hasAuthority('PERM_MENU_MANAGE')")
     public String index() {
-        return "admin/menu-management";
+        return "security/menu-management";
     }
 
     // ── DataTable ─────────────────────────────────────────────────────────

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<!--
+  admin/menu-management.html
+  Thymeleaf page — extends layout/base
+  Controller: AppMenuController  GET /admin/menus
+  Permission: PERM_MENU_MANAGE
+-->
+<html th:replace="~{layout/base :: layout('Menu Management', ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<section>
+
+  <!-- ── PAGE CONTENT ─────────────────────────────────────────────── -->
+  <div id="content" class="app-content">
+
+    <div th:replace="~{fragments/breadcrumb
+         :: pageHeader('Administration', 'Menu Management',
+            'build and manage the navigation tree')}">
+    </div>
+
+    <div class="panel panel-inverse">
+      <div class="panel-heading">
+        <div class="panel-title d-flex gap-2">
+          <a href="javascript:;" onclick="menuOpenCreate()">
+            <span class="badge btn btn-outline-success">
+              <i class="fa fa-plus me-1"></i> Add Menu Item
+            </span>
+          </a>
+        </div>
+        <div class="panel-heading-btn">
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-default"
+             data-toggle="panel-expand"><i class="fa fa-expand"></i></a>
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-success"
+             data-toggle="panel-reload"><i class="fa fa-redo"></i></a>
+          <a href="javascript:;" class="btn btn-sm btn-icon btn-warning"
+             data-toggle="panel-collapse"><i class="fa fa-minus"></i></a>
+        </div>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Filters -->
+        <div class="row mb-3 g-3">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Type</label>
+            <select id="typeFilter" class="form-select">
+              <option value="">All Types</option>
+              <option value="MODULE">Module</option>
+              <option value="GROUP">Group</option>
+              <option value="LEAF">Leaf</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Status</label>
+            <select id="statusFilter" class="form-select">
+              <option value="">All Status</option>
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <!--
+          DataTable columns mirror AppMenuServiceImpl.datatableList() row keys:
+          sl, menu_name, menu_type, parent, menu_url, icon,
+          order, permission, status, actions
+        -->
+        <table id="menuTable" width="100%"
+               class="table table-striped table-bordered align-middle
+                      text-nowrap dataTable dtr-inline">
+          <thead>
+          <tr>
+            <th width="1%">SL</th>
+            <th>Menu Name</th>
+            <th>Type</th>
+            <th>Parent</th>
+            <th>URL</th>
+            <th>Icon</th>
+            <th width="5%">Order</th>
+            <th>Permission</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /app-content -->
+
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL — CREATE / EDIT
+       ═══════════════════════════════════════════════════ -->
+  <div tabindex="-1" aria-hidden="true" id="menuModal" class="modal fade">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="menuModalLabel">
+            <i class="fa fa-sitemap text-success me-2"></i>Menu Item Form
+          </h5>
+          <button type="button" data-bs-dismiss="modal" class="btn-close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="hs-box">
+            <form id="menuForm" data-parsley-validate="true">
+              <input type="hidden" id="menuId">
+
+              <div class="row g-3">
+
+                <!-- Basic -->
+                <div class="col-12">
+                  <h6 class="text-primary mb-0">
+                    <i class="fa fa-info-circle me-1"></i>Basic Information
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">
+                    Menu Name <span class="text-danger">*</span>
+                  </label>
+                  <input type="text" class="form-control" id="mMenuName"
+                         name="menuName" required data-parsley-required="true"
+                         placeholder="e.g. Production Orders">
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label">
+                    Type <span class="text-danger">*</span>
+                  </label>
+                  <select class="form-select" id="mMenuType" name="menuType"
+                          onchange="menuTypeChanged(this.value)">
+                    <option value="MODULE">MODULE — Top-level tab</option>
+                    <option value="GROUP">GROUP — Section header</option>
+                    <option value="LEAF" selected>LEAF — Clickable link</option>
+                  </select>
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label">Display Order</label>
+                  <input type="number" class="form-control" id="mDisplayOrder"
+                         name="displayOrder" min="0" value="0">
+                </div>
+
+                <!-- Parent menu (hidden for MODULE) -->
+                <div class="col-12" id="parentMenuRow">
+                  <label class="form-label">Parent Menu</label>
+                  <select class="form-select" id="mParentId" name="parentId"
+                          data-parsley-errors-container="#parentError">
+                  </select>
+                  <div id="parentError"></div>
+                  <div class="form-text text-muted">
+                    Leave blank for top-level MODULE items.
+                  </div>
+                </div>
+
+                <!-- URL & Target (shown for LEAF only) -->
+                <div class="col-12" id="urlSection">
+                  <h6 class="text-info mb-0 mt-1">
+                    <i class="fa fa-link me-1"></i>Navigation
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-8" id="menuUrlRow">
+                  <label class="form-label">
+                    URL <span class="text-danger" id="urlRequired">*</span>
+                  </label>
+                  <input type="text" class="form-control" id="mMenuUrl"
+                         name="menuUrl"
+                         placeholder="/production-orders">
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">Link Target</label>
+                  <select class="form-select" id="mTarget" name="target">
+                    <option value="_self">_self (same tab)</option>
+                    <option value="_blank">_blank (new tab)</option>
+                  </select>
+                </div>
+
+                <!-- Icon (shown for MODULE) -->
+                <div class="col-12" id="iconSection">
+                  <h6 class="text-warning mb-0 mt-1">
+                    <i class="fa fa-icons me-1"></i>Icon
+                    <small class="text-muted fw-normal">
+                      — MODULE items only, Font Awesome class
+                    </small>
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-6" id="iconRow">
+                  <label class="form-label">Icon Class</label>
+                  <div class="input-group">
+                    <span class="input-group-text" id="iconPreview">
+                      <i class="fa fa-layer-group"></i>
+                    </span>
+                    <input type="text" class="form-control" id="mIcon"
+                           name="icon"
+                           placeholder="fa fa-industry"
+                           oninput="updateIconPreview(this.value)">
+                  </div>
+                  <div class="form-text">
+                    Browse icons at
+                    <a href="https://fontawesome.com/icons" target="_blank">
+                      fontawesome.com
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Permission -->
+                <div class="col-12">
+                  <h6 class="text-secondary mb-0 mt-1">
+                    <i class="fa fa-shield-halved me-1"></i>Access Control
+                  </h6>
+                  <hr class="mt-1 mb-0">
+                </div>
+
+                <div class="col-md-8">
+                  <label class="form-label">Required Permission</label>
+                  <input type="text" class="form-control" id="mRequiredPermission"
+                         name="requiredPermission"
+                         placeholder="PERM_PRODUCTION_ORDER_VIEW  (blank = all users)">
+                  <div class="form-text text-muted">
+                    Leave blank to show this item to all authenticated users.
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">&nbsp;</label>
+                  <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox"
+                           id="mActive" name="active" checked>
+                    <label class="form-check-label fw-semibold" for="mActive">
+                      Active
+                    </label>
+                  </div>
+                </div>
+
+              </div><!-- /row -->
+            </form>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" data-bs-dismiss="modal" class="btn btn-white">
+            Close
+          </button>
+          <button type="submit" form="menuForm" id="menuSubmitBtn"
+                  class="btn btn-success">
+            <span id="menuSpinner"
+                  class="spinner-border spinner-border-sm d-none"
+                  role="status"></span>
+            <span id="menuBtnText">Save</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /menuModal -->
+
+
+  <!-- ═══════════════════════════════════════════════════
+       MODAL — VIEW
+       ═══════════════════════════════════════════════════ -->
+  <div tabindex="-1" aria-hidden="true" id="menuModalShow" class="modal fade">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fa fa-sitemap text-success me-2"></i>Menu Item Details
+          </h5>
+          <button type="button" data-bs-dismiss="modal" class="btn-close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="hs-box">
+            <div class="row g-3">
+
+              <div class="col-12">
+                <div class="alert alert-info text-center mb-0 py-2">
+                  <i id="sv_icon" class="me-2"></i>
+                  <strong id="sv_menuName">—</strong>
+                  <span id="sv_typeBadge" class="badge ms-2">—</span>
+                  <span id="sv_activeBadge" class="badge ms-1">—</span>
+                </div>
+              </div>
+
+              <div class="col-md-4 view-group">
+                <label class="view-label">Type</label>
+                <span id="sv_menuType" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-4 view-group">
+                <label class="view-label">Parent</label>
+                <span id="sv_parent" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-4 view-group">
+                <label class="view-label">Display Order</label>
+                <span id="sv_order" class="form-control hs_span_show"></span>
+              </div>
+
+              <div class="col-md-8 view-group">
+                <label class="view-label">URL</label>
+                <span id="sv_menuUrl" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-4 view-group">
+                <label class="view-label">Target</label>
+                <span id="sv_target" class="form-control hs_span_show"></span>
+              </div>
+
+              <div class="col-md-6 view-group">
+                <label class="view-label">Icon</label>
+                <span id="sv_iconText" class="form-control hs_span_show"></span>
+              </div>
+              <div class="col-md-6 view-group">
+                <label class="view-label">Required Permission</label>
+                <span id="sv_permission" class="form-control hs_span_show"></span>
+              </div>
+
+              <div class="col-12 mt-2">
+                <hr class="mb-2">
+                <small class="text-muted">
+                  Created by: <strong id="sv_createdBy"></strong>
+                  &nbsp;at: <span id="sv_createdAt"></span>
+                  &nbsp;&nbsp;
+                  Updated by: <strong id="sv_updatedBy"></strong>
+                  &nbsp;at: <span id="sv_updatedAt"></span>
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" data-bs-dismiss="modal" class="btn btn-white">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /menuModalShow -->
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       PAGE SCRIPTS
+  ════════════════════════════════════════════════════════════════ -->
+  <script>
+
+  /* ── DataTable ─────────────────────────────────────────────────── */
+  let menuDT;
+
+  document.addEventListener('DOMContentLoaded', function () {
+      menuDT = $('#menuTable').DataTable({
+          processing: true,
+          responsive: true,
+          serverSide: true,
+          ajax: {
+              url:  '/admin/menus/list',
+              type: 'GET',
+              data: function (d) {
+                  d.typeFilter   = document.getElementById('typeFilter').value;
+                  d.statusFilter = document.getElementById('statusFilter').value;
+              }
+          },
+          columns: [
+              { data: 'sl',         orderable: false, width: '3%' },
+              { data: 'menu_name'                                  },
+              { data: 'menu_type',  orderable: false               },
+              { data: 'parent'                                     },
+              { data: 'menu_url'                                   },
+              { data: 'icon',       orderable: false               },
+              { data: 'order',      width: '5%'                   },
+              { data: 'permission', orderable: false               },
+              { data: 'status',     orderable: false               },
+              { data: 'actions',    orderable: false               }
+          ]
+      });
+
+      ['typeFilter','statusFilter'].forEach(id => {
+          document.getElementById(id).addEventListener('change', () => menuDT.ajax.reload());
+      });
+
+      initMenuForm();
+      initParentSelect2();
+  });
+
+
+  /* ── Parent select2 ────────────────────────────────────────────── */
+  function initParentSelect2(preselect) {
+      const $sel = $('#mParentId');
+      if ($sel.hasClass('select2-hidden-accessible')) $sel.select2('destroy');
+
+      $sel.select2({
+          dropdownParent:     $('#menuModal'),
+          width:              '100%',
+          placeholder:        '— Top-level (no parent) —',
+          allowClear:         true,
+          minimumInputLength: 0,
+          ajax: {
+              url:      '/admin/menus/parents/search',
+              dataType: 'json',
+              delay:    200,
+              data:     params => ({ search: params.term || '' }),
+              processResults: data => ({
+                  results: data.map(r => ({
+                      id:       r.id,
+                      text:     r.text,
+                      menuType: r.menuType
+                  }))
+              }),
+              cache: true
+          },
+          templateResult: function (r) {
+              if (r.loading) return r.text;
+              const badge = r.menuType === 'MODULE'
+                  ? "<span class='badge bg-primary ms-2'>MODULE</span>"
+                  : "<span class='badge bg-info text-dark ms-2'>GROUP</span>";
+              return $(`<div>${r.text}${badge}</div>`);
+          },
+          templateSelection: r => r.text || r.id
+      });
+
+      if (preselect && preselect.parentId) {
+          $sel.append(new Option(preselect.parentName || preselect.parentId,
+                                 preselect.parentId, true, true)).trigger('change');
+      }
+  }
+
+
+  /* ── Form reset ────────────────────────────────────────────────── */
+  function menuResetForm() {
+      const form = document.getElementById('menuForm');
+      if (form) form.reset();
+      const id = document.getElementById('menuId');
+      if (id) id.value = '';
+
+      const $p = $('#mParentId');
+      if ($p.hasClass('select2-hidden-accessible')) $p.val(null).trigger('change');
+
+      // Default state: LEAF selected, sections visible correctly
+      menuTypeChanged('LEAF');
+      updateIconPreview('fa fa-layer-group');
+
+      const activeEl = document.getElementById('mActive');
+      if (activeEl) activeEl.checked = true;
+  }
+
+
+  /* ── Menu type → show/hide sections ───────────────────────────── */
+  function menuTypeChanged(type) {
+      const isModule = type === 'MODULE';
+      const isLeaf   = type === 'LEAF';
+
+      // MODULE: no parent, show icon section
+      const parentRow = document.getElementById('parentMenuRow');
+      if (parentRow) parentRow.style.display = isModule ? 'none' : '';
+
+      // Only LEAF has URL
+      const urlSect   = document.getElementById('urlSection');
+      const urlRow    = document.getElementById('menuUrlRow');
+      if (urlSect) urlSect.style.display = isLeaf ? '' : 'none';
+      if (urlRow)  urlRow.style.display  = isLeaf ? '' : 'none';
+
+      // URL required only for LEAF
+      const urlReq    = document.getElementById('urlRequired');
+      const urlInput  = document.getElementById('mMenuUrl');
+      if (urlInput) {
+          if (isLeaf) {
+              urlInput.setAttribute('data-parsley-required', 'true');
+          } else {
+              urlInput.removeAttribute('data-parsley-required');
+              urlInput.removeAttribute('required');
+          }
+      }
+      if (urlReq) urlReq.style.display = isLeaf ? 'inline' : 'none';
+
+      // Icon shown for MODULE
+      const iconSect = document.getElementById('iconSection');
+      const iconRow  = document.getElementById('iconRow');
+      if (iconSect) iconSect.style.display = isModule ? '' : 'none';
+      if (iconRow)  iconRow.style.display  = isModule ? '' : 'none';
+  }
+
+
+  /* ── Icon live preview ─────────────────────────────────────────── */
+  function updateIconPreview(cls) {
+      const preview = document.getElementById('iconPreview');
+      if (!preview) return;
+      const icon = cls ? cls.trim() : 'fa fa-layer-group';
+      preview.innerHTML = `<i class="${icon}"></i>`;
+  }
+
+
+  /* ── Open create modal ─────────────────────────────────────────── */
+  function menuOpenCreate() {
+      menuResetForm();
+      const label = document.getElementById('menuModalLabel');
+      if (label) label.innerHTML =
+          '<i class="fa fa-sitemap text-success me-2"></i>Add Menu Item';
+      initParentSelect2(null);
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('menuModal')).show();
+  }
+
+
+  /* ── Form submit ───────────────────────────────────────────────── */
+  function initMenuForm() {
+      const form      = document.getElementById('menuForm');
+      const submitBtn = document.getElementById('menuSubmitBtn');
+      const spinner   = document.getElementById('menuSpinner');
+      const btnText   = document.getElementById('menuBtnText');
+
+      if (!form) return;
+
+      window.Parsley.on('field:error',   function () { this.$element.addClass('is-invalid'); });
+      window.Parsley.on('field:success', function () { this.$element.removeClass('is-invalid'); });
+
+      form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          if (!$(form).parsley().isValid()) return;
+
+          hsDisableButton(submitBtn, spinner, btnText);
+
+          const payload = {
+              id:                 document.getElementById('menuId')?.value || null,
+              menuName:           document.getElementById('mMenuName')?.value.trim(),
+              menuType:           document.getElementById('mMenuType')?.value,
+              parentId:           $('#mParentId').val() ? parseInt($('#mParentId').val()) : null,
+              menuUrl:            document.getElementById('mMenuUrl')?.value.trim() || null,
+              target:             document.getElementById('mTarget')?.value || '_self',
+              icon:               document.getElementById('mIcon')?.value.trim() || null,
+              displayOrder:       parseInt(document.getElementById('mDisplayOrder')?.value) || 0,
+              requiredPermission: document.getElementById('mRequiredPermission')?.value.trim() || null,
+              active:             document.getElementById('mActive')?.checked ?? true
+          };
+
+          secureFetch('/admin/menus/save', { method: 'POST', body: JSON.stringify(payload) })
+              .then(data => {
+                  hsEnableButton(submitBtn, spinner, btnText);
+                  if (data.success) {
+                      Swal.fire({ icon: 'success', title: 'Saved!', text: data.message,
+                                  timer: 2000, showConfirmButton: false });
+                      bootstrap.Modal.getOrCreateInstance(
+                          document.getElementById('menuModal')).hide();
+                      menuDT.ajax.reload();
+                  } else {
+                      Swal.fire({ icon: 'error', title: 'Error!', text: data.message });
+                  }
+              })
+              .catch(err => {
+                  hsEnableButton(submitBtn, spinner, btnText);
+                  Swal.fire({ icon: 'error', title: 'Error!', text: err.message });
+              });
+      });
+  }
+
+
+  /* ── Action handlers (names called from Java buildActionButtons) ─ */
+
+  function menuEdit(id) {
+      secureFetch('/admin/menus/show/' + id).then(data => {
+          if (!data.success) { Swal.fire('Error', data.message, 'error'); return; }
+          const m = data.obj.defaultData;
+
+          menuResetForm();
+          const label = document.getElementById('menuModalLabel');
+          if (label) label.innerHTML =
+              '<i class="fa fa-pen-to-square text-warning me-2"></i>Edit Menu Item';
+
+          const set = (elId, val) => {
+              const el = document.getElementById(elId);
+              if (el) el.value = val ?? '';
+          };
+
+          set('menuId',              m.id);
+          set('mMenuName',           m.menuName);
+          set('mMenuUrl',            m.menuUrl);
+          set('mIcon',               m.icon);
+          set('mDisplayOrder',       m.displayOrder);
+          set('mRequiredPermission', m.requiredPermission);
+
+          const typeEl = document.getElementById('mMenuType');
+          if (typeEl) { typeEl.value = m.menuType; menuTypeChanged(m.menuType); }
+
+          const targetEl = document.getElementById('mTarget');
+          if (targetEl) targetEl.value = m.target || '_self';
+
+          const activeEl = document.getElementById('mActive');
+          if (activeEl) activeEl.checked = !!m.active;
+
+          updateIconPreview(m.icon || 'fa fa-layer-group');
+
+          initParentSelect2({ parentId: m.parentId, parentName: m.parentName });
+
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('menuModal')).show();
+      });
+  }
+
+  function menuShow(id) {
+      secureFetch('/admin/menus/show/' + id).then(data => {
+          if (!data.success) { Swal.fire('Error', data.message, 'error'); return; }
+          populateMenuView(data.obj.defaultData);
+          bootstrap.Modal.getOrCreateInstance(
+              document.getElementById('menuModalShow')).show();
+      });
+  }
+
+  function populateMenuView(m) {
+      const iconEl = document.getElementById('sv_icon');
+      if (iconEl) iconEl.className = (m.icon || 'fa fa-sitemap') + ' me-2';
+
+      hsSetText('sv_menuName',  m.menuName || '—');
+
+      const typeBadge = document.getElementById('sv_typeBadge');
+      if (typeBadge) {
+          const cls = { MODULE: 'bg-primary', GROUP: 'bg-info text-dark', LEAF: 'bg-success' };
+          typeBadge.textContent = m.menuType;
+          typeBadge.className   = 'badge ms-2 ' + (cls[m.menuType] || 'bg-secondary');
+      }
+
+      const activeB = document.getElementById('sv_activeBadge');
+      if (activeB) {
+          activeB.textContent = m.active ? 'Active' : 'Inactive';
+          activeB.className   = 'badge ms-1 ' + (m.active ? 'bg-success' : 'bg-secondary');
+      }
+
+      hsSetText('sv_menuType',  m.menuType     || '—');
+      hsSetText('sv_parent',    m.parentName   || '— (top level)');
+      hsSetText('sv_order',     m.displayOrder ?? 0);
+      hsSetText('sv_menuUrl',   m.menuUrl      || '—');
+      hsSetText('sv_target',    m.target       || '_self');
+      hsSetText('sv_iconText',  m.icon         || '—');
+      hsSetText('sv_permission',m.requiredPermission || '— (all users)');
+      hsSetText('sv_createdBy', m.createdBy    || '—');
+      hsSetText('sv_createdAt', m.createdAt    || '—');
+      hsSetText('sv_updatedBy', m.updatedBy    || '—');
+      hsSetText('sv_updatedAt', m.updatedAt    || '—');
+  }
+
+  function menuDelete(id) {
+      confirmAndExecute({
+          title:        'Delete Menu Item?',
+          text:         'All child items will also be deleted. This cannot be undone.',
+          icon:         'warning',
+          confirmText:  'Yes, delete!',
+          confirmColor: '#d33',
+          url:          `/admin/menus/delete/${id}`,
+          method:       'DELETE',
+          successTitle: 'Deleted!',
+          reloadTable:  true,
+          dataTable:    menuDT
+      });
+  }
+
+  function menuToggle(id) {
+      hsChangeStatus('/admin/menus/toggle/' + id, menuDT, 'Menu Item');
+  }
+
+  </script>
+
+</section>
+</html>

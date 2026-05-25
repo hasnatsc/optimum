@@ -46,8 +46,8 @@ public interface AppMenuRepository extends JpaRepository<AppMenu, Long> {
         WHERE m.active   = true
           AND m.deleted  = false
           AND m.menuType IN (
-              com.hasnat.optimum.menu.entity.AppMenu.MenuType.MODULE,
-              com.hasnat.optimum.menu.entity.AppMenu.MenuType.GROUP
+              com.hasnat.optimum.security.entity.AppMenu.MenuType.MODULE,
+              com.hasnat.optimum.security.entity.AppMenu.MenuType.GROUP
           )
         ORDER BY m.displayOrder ASC, m.menuName ASC
     """)
