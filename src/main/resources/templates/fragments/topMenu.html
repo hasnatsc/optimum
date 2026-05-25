@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  FRAGMENT  fragments/topMenu :: topMenu                      ║
+  ║                                                              ║
+  ║  Usage:                                                      ║
+  ║    <div th:replace="~{fragments/topMenu :: topMenu}"></div>  ║
+  ║                                                              ║
+  ║  What this does:                                             ║
+  ║  1. Renders the #top-menu shell with a loading spinner.      ║
+  ║  2. Patches App.initTopMenu() to a no-op BEFORE the          ║
+  ║     framework fires it on DOMContentLoaded — prevents the    ║
+  ║     "t is null / querySelectorAll" crash when there are      ║
+  ║     no .menu-item elements yet.                              ║
+  ║  3. Fetches the user's menu from /openApi/menus/user-menu,  ║
+  ║     builds the tree, renders it, then calls the REAL         ║
+  ║     App.initTopMenu() wrapped in try-catch.                  ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<body>
+
+<div th:fragment="topMenu" id="top-menu" class="app-top-menu"
+     data-bs-theme="dark">
+
+  <div class="menu" id="dynamic-top-menu">
+
+    <!-- Loading placeholder (removed once menu renders) -->
+    <div class="menu-loading text-center py-3" id="menuLoader">
+      <div class="spinner-border spinner-border-sm text-light" role="status">
+        <span class="visually-hidden">Loading menu…</span>
+      </div>
+    </div>
+
+    <!-- Scroll controls (always present — framework expects them) -->
+    <div class="menu-item menu-control menu-control-start">
+      <a href="javascript:;" class="menu-link" data-toggle="app-top-menu-prev">
+        <i class="fa fa-angle-left"></i>
+      </a>
+    </div>
+    <div class="menu-item menu-control menu-control-end">
+      <a href="javascript:;" class="menu-link" data-toggle="app-top-menu-next">
+        <i class="fa fa-angle-right"></i>
+      </a>
+    </div>
+
+  </div><!-- /dynamic-top-menu -->
+
+
+  <!--
+    Inline script lives INSIDE the fragment div so th:replace includes it.
+    DO NOT move it outside this div — it would be lost on fragment replace.
+  -->
+  <script>
+  /* ─────────────────────────────────────────────────────────────────────
+     STEP 1 — Patch App.initTopMenu() before the framework fires it.
+
+     Color Admin's app.min.js calls App.initTopMenu() on DOMContentLoaded.
+     At that moment our dynamic menu items don't exist yet (fetch is async),
+     so querySelector('.menu-item:not(.menu-control)') returns null and
+     null.querySelectorAll(...) throws:
+       "Uncaught TypeError: can't access property querySelectorAll, t is null"
+
+     Strategy:
+       a) Replace App.initTopMenu with a no-op immediately (or on
+          DOMContentLoaded in the capture phase, which runs before the
+          framework's own bubble-phase listener).
+       b) After our fetch + render, call the real implementation ourselves,
+          wrapped in try-catch so any remaining edge-cases are swallowed.
+  ───────────────────────────────────────────────────────────────────── */
+  (function patchAndLoad() {
+
+    function patchApp() {
+      if (typeof App !== 'undefined' && typeof App.initTopMenu === 'function') {
+        window.__realInitTopMenu = App.initTopMenu.bind(App);
+        App.initTopMenu = function () { /* deferred — called after dynamic render */ };
+        return true;
+      }
+      return false;
+    }
+
+    // Try immediately (scripts in <head> may have already defined App)
+    if (!patchApp()) {
+      // Capture phase runs before the framework's own DOMContentLoaded listener
+      document.addEventListener('DOMContentLoaded', patchApp, true);
+    }
+
+    // STEP 2 — Load menu after DOM is ready
+    document.addEventListener('DOMContentLoaded', loadDynamicTopMenu);
+
+  })();
+
+
+  /* ─────────────────────────────────────────────────────────────────────
+     STEP 2 — Fetch, build, render, then hand back to the framework
+  ───────────────────────────────────────────────────────────────────── */
+  function loadDynamicTopMenu() {
+    secureFetch('/openApi/menus/user-menu')
+      .then(function (data) {
+        if (!data.success) { showMenuError(data.message || 'Failed to load menu'); return; }
+
+        var flat = (data.menus && data.menus.items) ? data.menus.items : [];
+        var tree = buildMenuTree(flat);
+        sortMenus(tree);
+        renderTopMenu(tree);
+        expandActiveMenuItem();
+
+        // STEP 3 — call real initTopMenu in try-catch
+        var init = window.__realInitTopMenu ||
+                   (typeof App !== 'undefined' && App.initTopMenu);
+        if (typeof init === 'function') {
+          try { init(); }
+          catch (e) { console.warn('[TopMenu] App.initTopMenu() skipped:', e.message); }
+        }
+      })
+      .catch(function (err) {
+        console.error('[TopMenu] fetch error:', err);
+        showMenuError('Could not load navigation menu.');
+      });
+  }
+
+
+  /* ─────────────────────────────────────────────────────────────────────
+     TREE BUILDER  (flat array → nested tree by parentMenuId)
+  ───────────────────────────────────────────────────────────────────── */
+  function buildMenuTree(flat) {
+    var map = {}, roots = [];
+    flat.forEach(function (m) { m.subMenus = []; map[m.id] = m; });
+    flat.forEach(function (m) {
+      (m.parentMenuId && map[m.parentMenuId])
+        ? map[m.parentMenuId].subMenus.push(m)
+        : roots.push(m);
+    });
+    return roots;
+  }
+
+  function sortMenus(menus) {
+    menus.sort(function (a, b) { return (a.displayOrder || 0) - (b.displayOrder || 0); });
+    menus.forEach(function (m) { if (m.subMenus && m.subMenus.length) sortMenus(m.subMenus); });
+  }
+
+
+  /* ─────────────────────────────────────────────────────────────────────
+     RENDERER
+  ───────────────────────────────────────────────────────────────────── */
+  function renderTopMenu(modules) {
+    var container = document.getElementById('dynamic-top-menu');
+    if (!container) return;
+
+    var loader = document.getElementById('menuLoader');
+    if (loader) loader.remove();
+
+    // Remove any previously rendered items (not the controls)
+    container.querySelectorAll('.menu-item:not(.menu-control)').forEach(function (el) {
+      el.remove();
+    });
+
+    var anchor = container.querySelector('.menu-control-start');
+    modules.forEach(function (mod) {
+      var el = createModuleEl(mod);
+      anchor ? container.insertBefore(el, anchor) : container.appendChild(el);
+    });
+  }
+
+  /** Module = top-level tab with sub-menu flyout */
+  function createModuleEl(mod) {
+    var item = document.createElement('div');
+    item.className = 'menu-item has-sub';
+    item.innerHTML =
+      '<a href="javascript:;" class="menu-link">' +
+        '<div class="menu-icon"><i class="' + (mod.icon || 'fa fa-layer-group') + '"></i></div>' +
+        '<div class="menu-text">' + escHtml(mod.menuName) + '</div>' +
+        '<div class="menu-caret"></div>' +
+      '</a><div class="menu-submenu"></div>';
+    var sub = item.querySelector('.menu-submenu');
+    (mod.subMenus || []).forEach(function (g) { sub.appendChild(createGroupEl(g)); });
+    return item;
+  }
+
+  /** Group = non-clickable header inside a flyout */
+  function createGroupEl(group) {
+    var item = document.createElement('div');
+    item.className = 'menu-item has-sub';
+    item.innerHTML =
+      '<a href="javascript:;" class="menu-link">' +
+        '<div class="menu-text">' + escHtml(group.menuName) + '</div>' +
+        '<div class="menu-caret"></div>' +
+      '</a><div class="menu-submenu"></div>';
+    var sub = item.querySelector('.menu-submenu');
+    (group.subMenus || []).forEach(function (m) { sub.appendChild(createLeafEl(m)); });
+    return item;
+  }
+
+  /** Leaf = clickable link */
+  function createLeafEl(menu) {
+    var item    = document.createElement('div');
+    var isActive = menu.menuUrl && window.location.pathname === menu.menuUrl;
+    item.className = 'menu-item' + (isActive ? ' active' : '');
+    item.innerHTML =
+      '<a href="' + (menu.menuUrl || '#') + '" class="menu-link"' +
+          ' target="' + (menu.target || '_self') + '">' +
+        '<div class="menu-text">' + escHtml(menu.menuName) + '</div>' +
+      '</a>';
+    return item;
+  }
+
+
+  /* ─────────────────────────────────────────────────────────────────────
+     AUTO-EXPAND active path
+  ───────────────────────────────────────────────────────────────────── */
+  function expandActiveMenuItem() {
+    var active = document.querySelector('#dynamic-top-menu .menu-item.active');
+    if (!active) return;
+    var node = active.parentElement;
+    while (node && node.id !== 'dynamic-top-menu') {
+      if (node.classList && node.classList.contains('menu-item')) node.classList.add('open');
+      node = node.parentElement;
+    }
+  }
+
+
+  /* ─────────────────────────────────────────────────────────────────────
+     HELPERS
+  ───────────────────────────────────────────────────────────────────── */
+  function showMenuError(msg) {
+    var loader = document.getElementById('menuLoader');
+    if (loader) {
+      loader.innerHTML =
+        '<div class="alert alert-danger alert-sm m-2 py-1">' +
+        '<i class="fa fa-triangle-exclamation me-1"></i>' + escHtml(msg) + '</div>';
+    }
+  }
+
+  function escHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function (c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];
+    });
+  }
+  </script>
+
+</div><!-- /top-menu -->
+
+</body>
+</html>

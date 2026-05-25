@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║  FRAGMENT  fragments/breadcrumb                                  ║
+  ║                                                                  ║
+  ║  Three variants:                                                  ║
+  ║                                                                  ║
+  ║  1. pageHeader(module, page, subtitle)                           ║
+  ║     Renders <ol class="breadcrumb"> + <h1 class="page-header">  ║
+  ║     Usage:                                                       ║
+  ║       <div th:replace="~{fragments/breadcrumb                   ║
+  ║            :: pageHeader('Security','User Management',           ║
+  ║               'create, assign roles, and control access')}">    ║
+  ║       </div>                                                     ║
+  ║                                                                  ║
+  ║  2. breadcrumbOnly(module, page)                                 ║
+  ║     Only the <ol> breadcrumb trail without the h1.               ║
+  ║                                                                  ║
+  ║  3. pageHeaderFull(items, title, subtitle)                       ║
+  ║     Arbitrary multi-level breadcrumb via a List<String[]>        ║
+  ║     where each String[] is { "Label", "/url" }.                  ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+<body>
+
+
+<!-- ── Variant 1: breadcrumb + h1 (most common) ─────────────────────── -->
+<th:block th:fragment="pageHeader(module, page, subtitle)">
+
+  <ol class="breadcrumb float-xl-end">
+    <li class="breadcrumb-item">
+      <a th:href="@{/dashboard}">Home</a>
+    </li>
+    <li class="breadcrumb-item" th:text="${module}">Module</li>
+    <li class="breadcrumb-item active" th:text="${page}">Page</li>
+  </ol>
+
+  <h1 class="page-header">
+    <span th:text="${page}">Page</span>
+    <small th:if="${subtitle != null and !#strings.isEmpty(subtitle)}"
+           th:text="${subtitle}">subtitle</small>
+  </h1>
+
+</th:block>
+
+
+<!-- ── Variant 2: breadcrumb only ───────────────────────────────────── -->
+<ol th:fragment="breadcrumbOnly(module, page)"
+    class="breadcrumb float-xl-end">
+  <li class="breadcrumb-item">
+    <a th:href="@{/dashboard}">Home</a>
+  </li>
+  <li class="breadcrumb-item" th:text="${module}">Module</li>
+  <li class="breadcrumb-item active" th:text="${page}">Page</li>
+</ol>
+
+
+<!-- ── Variant 3: arbitrary depth ───────────────────────────────────── -->
+<!--
+  items  = List of String[]{label, url}  (last item has no url — active)
+  title  = h1 text
+  subtitle = h1 <small> text (may be null)
+
+  Controller example:
+    model.addAttribute("breadcrumbs", List.of(
+        new String[]{"Security",         "/security"},
+        new String[]{"User Management",  null}
+    ));
+-->
+<th:block th:fragment="pageHeaderFull(items, title, subtitle)">
+
+  <ol class="breadcrumb float-xl-end">
+    <li class="breadcrumb-item"><a th:href="@{/dashboard}">Home</a></li>
+    <th:block th:each="item, stat : ${items}">
+      <li th:if="${!stat.last}"
+          class="breadcrumb-item">
+        <a th:if="${item[1] != null}" th:href="${item[1]}" th:text="${item[0]}">Label</a>
+        <span th:unless="${item[1] != null}" th:text="${item[0]}">Label</span>
+      </li>
+      <li th:if="${stat.last}"
+          class="breadcrumb-item active"
+          th:text="${item[0]}">Page</li>
+    </th:block>
+  </ol>
+
+  <h1 class="page-header">
+    <span th:text="${title}">Title</span>
+    <small th:if="${subtitle != null and !#strings.isEmpty(subtitle)}"
+           th:text="${subtitle}">subtitle</small>
+  </h1>
+
+</th:block>
+
+
+</body>
+</html>

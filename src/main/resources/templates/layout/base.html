@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║  MASTER LAYOUT  layout/base :: layout(pageTitle, content)           ║
+  ║                                                                      ║
+  ║  Every authenticated page uses this layout.                          ║
+  ║  The page passes its title (String) and content (<section>).         ║
+  ║                                                                      ║
+  ║  Page template skeleton:                                             ║
+  ║                                                                      ║
+  ║    <!DOCTYPE html>                                                   ║
+  ║    <html th:replace="~{layout/base                                  ║
+  ║               :: layout('User Management', ~{::section})}">         ║
+  ║                                                                      ║
+  ║      <section>                                                       ║
+  ║        <div id="content" class="app-content">                       ║
+  ║                                                                      ║
+  ║          <div th:replace="~{fragments/breadcrumb                    ║
+  ║               :: pageHeader('Security','User Management',            ║
+  ║                  'manage users and access')}"></div>                 ║
+  ║                                                                      ║
+  ║          <!-- page body here -->                                     ║
+  ║                                                                      ║
+  ║        </div>                                                        ║
+  ║      </section>                                                      ║
+  ║                                                                      ║
+  ║    </html>                                                           ║
+  ║                                                                      ║
+  ║  NOTES:                                                              ║
+  ║  • The outer <html> element is REPLACED by this layout.             ║
+  ║  • Only <section> content is kept from the calling page.            ║
+  ║  • Do NOT add <head> or <body> to the calling page.                 ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+-->
+
+<html th:fragment="layout(pageTitle, content)" lang="en">
+
+  <!-- Head — delegates to the head fragment for all CSS/JS -->
+  <head th:replace="~{fragments/head :: commonHead(${pageTitle})}"></head>
+
+  <body>
+
+    <!-- App loader (Color Admin spinner shown before JS initialises) -->
+    <div id="loader" class="app-loader">
+      <span class="spinner"></span>
+    </div>
+
+    <div id="app"
+         class="app app-header-fixed app-sidebar-fixed
+                app-without-sidebar app-with-top-menu">
+
+      <!-- ── Navbar ────────────────────────────────────────────────── -->
+      <div th:replace="~{fragments/topMenuHeader :: topMenuHeader}"></div>
+
+      <!-- ── Top menu ──────────────────────────────────────────────── -->
+      <div th:replace="~{fragments/topMenu :: topMenu}"></div>
+
+      <!-- Sidebar mobile overlay -->
+      <div class="app-sidebar-mobile-backdrop">
+        <a href="#" data-dismiss="app-sidebar-mobile" class="stretched-link"></a>
+      </div>
+
+      <!-- ── Page content (injected from calling page's <section>) ─── -->
+      <div th:replace="${content}"></div>
+
+    </div><!-- /app -->
+
+  </body>
+</html>
+
+</html>

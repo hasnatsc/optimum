@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  FRAGMENT  fragments/head :: commonHead(title)              ║
+  ║                                                              ║
+  ║  Usage (basic):                                              ║
+  ║    <head th:replace="~{fragments/head                       ║
+  ║         :: commonHead('User Management')}"></head>           ║
+  ║                                                              ║
+  ║  Usage via layout (preferred):                               ║
+  ║    page extends layout/base which calls this automatically.  ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<head th:fragment="commonHead(title)">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${title} + ' — Spindles ERP'">Spindles ERP</title>
+  <link rel="icon" type="image/png" th:href="@{/img/favicon.svg}">
+
+  <!--
+    Spring Security CSRF
+    CookieCsrfTokenRepository stores the token in the XSRF-TOKEN cookie
+    (httpOnly=false) AND here in the meta tag so:
+      • Thymeleaf th:action forms include it automatically
+      • secureFetch() reads it from the meta tag for AJAX calls
+  -->
+  <meta name="_csrf"        th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+
+  <!-- Core stylesheets -->
+  <link th:href="@{/css/app.min.css}"     rel="stylesheet"/>
+  <link th:href="@{/css/vendor.min.css}"  rel="stylesheet"/>
+  <link th:href="@{/css/application.css}" rel="stylesheet"/>
+
+  <!-- DataTables -->
+  <link th:href="@{/css/dataTables/dataTables.bootstrap5.min.css}" rel="stylesheet"/>
+  <link th:href="@{/css/dataTables/responsive.bootstrap5.min.css}" rel="stylesheet"/>
+
+  <!-- Plugins -->
+  <link th:href="@{/css/plugins/select2.min.css}"                  rel="stylesheet"/>
+  <link th:href="@{/css/plugins/bootstrap-datepicker.min.css}"     rel="stylesheet"/>
+  <link th:href="@{/css/plugins/bootstrap-datetimepicker.min.css}" rel="stylesheet"/>
+
+  <!--
+    Core scripts loaded in <head> (NOT deferred).
+    app.min.js defines window.App. The topMenu fragment's inline script
+    patches App.initTopMenu() during the DOMContentLoaded capture phase.
+    If these scripts were deferred, the patch would arrive too late.
+  -->
+  <script th:src="@{/js/app.min.js}"></script>
+  <script th:src="@{/js/vendor.min.js}"></script>
+
+  <!-- DataTables -->
+  <script th:src="@{/js/dataTables/dataTables.min.js}"></script>
+  <script th:src="@{/js/dataTables/dataTables.bootstrap5.min.js}"></script>
+  <script th:src="@{/js/dataTables/dataTables.responsive.min.js}"></script>
+  <script th:src="@{/js/dataTables/responsive.bootstrap5.min.js}"></script>
+  <script th:src="@{/js/dataTables/table-manage-default.demo.js}"></script>
+  <script th:src="@{/js/dataTables/highlight.min.js}"></script>
+  <script th:src="@{/js/dataTables/render.highlight.js}"></script>
+
+  <!-- Plugins -->
+  <script th:src="@{/js/plugins/select2.min.js}"></script>
+  <script th:src="@{/js/plugins/bootstrap-datepicker.js}"></script>
+  <script th:src="@{/js/plugins/bootstrap-datetimepicker.min.js}"></script>
+  <script th:src="@{/js/plugins/moment.min.js}"></script>
+  <script th:src="@{/js/plugins/sweetalert.js}"></script>
+  <script th:src="@{/js/plugins/parsley.min.js}"></script>
+
+  <!-- Global utility library: secureFetch, hsDisableButton, nullCheck … -->
+  <script th:src="@{/js/application.js}"></script>
+
+</head>
+</html>
