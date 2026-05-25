@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ═══════════════════════════════════════════════════
+       Spindles ERP — Login
+       Spring Security login page (assembled standalone)
+       ═══════════════════════════════════════════════════ -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign In — Spindles ERP</title>
+  <link rel="icon" type="image/png" href="/img/favicon.svg">
+
+  <!-- CSRF: Thymeleaf injects the real token at render time -->
+  <meta name="_csrf"        content="">
+  <meta name="_csrf_header" content="X-CSRF-TOKEN">
+
+  <!-- Color Admin core -->
+  <link href="/css/app.min.css"     rel="stylesheet"/>
+  <link href="/css/vendor.min.css"  rel="stylesheet"/>
+  <link href="/css/application.css" rel="stylesheet"/>
+
+  <!-- Page-specific styles -->
+  <style>
+    /* ── Layout ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f1923;
+    }
+
+    .erp-login-wrap {
+      display:         flex;
+      min-height:      100vh;
+    }
+
+    /* ── Left panel — branding ───────────────────────── */
+    .erp-brand-panel {
+      flex:            0 0 420px;
+      background:      #101e2b;
+      display:         flex;
+      flex-direction:  column;
+      justify-content: space-between;
+      padding:         48px 44px;
+      position:        relative;
+      overflow:        hidden;
+    }
+
+    /* Background grid pattern */
+    .erp-brand-panel::before {
+      content:  '';
+      position: absolute;
+      inset:    0;
+      background-image:
+        linear-gradient(rgba(0,168,107,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,168,107,.06) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Decorative glow orb */
+    .erp-brand-panel::after {
+      content:       '';
+      position:      absolute;
+      width:         340px;
+      height:        340px;
+      border-radius: 50%;
+      background:    radial-gradient(circle, rgba(0,168,107,.18) 0%, transparent 70%);
+      bottom:        -80px;
+      left:          -60px;
+      pointer-events: none;
+    }
+
+    .erp-brand-top { position: relative; z-index: 1; }
+
+    .erp-logo-mark {
+      display:       flex;
+      align-items:   center;
+      gap:           12px;
+      margin-bottom: 56px;
+    }
+
+    .erp-logo-icon {
+      width:         44px;
+      height:        44px;
+      border-radius: 10px;
+      background:    linear-gradient(135deg, #00a86b, #00c47e);
+      display:       flex;
+      align-items:   center;
+      justify-content: center;
+      font-size:     20px;
+      color:         #fff;
+      box-shadow:    0 4px 16px rgba(0,168,107,.4);
+      flex-shrink:   0;
+    }
+
+    .erp-logo-text {
+      line-height: 1;
+    }
+    .erp-logo-text strong {
+      display:     block;
+      font-size:   20px;
+      font-weight: 700;
+      color:       #fff;
+      letter-spacing: .4px;
+    }
+    .erp-logo-text span {
+      font-size:  11px;
+      color:      rgba(255,255,255,.4);
+      font-weight: 500;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .erp-tagline {
+      color:         rgba(255,255,255,.88);
+      font-size:     28px;
+      font-weight:   700;
+      line-height:   1.25;
+      margin-bottom: 18px;
+      letter-spacing: -.3px;
+    }
+    .erp-tagline em {
+      font-style: normal;
+      color:      #00c47e;
+    }
+
+    .erp-sub {
+      color:       rgba(255,255,255,.42);
+      font-size:   13.5px;
+      line-height: 1.65;
+      max-width:   300px;
+    }
+
+    /* Feature list */
+    .erp-feature-list {
+      list-style:  none;
+      padding:     0;
+      margin:      40px 0 0;
+    }
+    .erp-feature-list li {
+      display:     flex;
+      align-items: center;
+      gap:         10px;
+      color:       rgba(255,255,255,.5);
+      font-size:   13px;
+      margin-bottom: 12px;
+    }
+    .erp-feature-list li i {
+      width:         22px;
+      height:        22px;
+      border-radius: 50%;
+      background:    rgba(0,168,107,.15);
+      color:         #00c47e;
+      display:       flex;
+      align-items:   center;
+      justify-content: center;
+      font-size:     10px;
+      flex-shrink:   0;
+    }
+
+    /* Bottom badge */
+    .erp-brand-footer {
+      position:  relative;
+      z-index:   1;
+      font-size: 11.5px;
+      color:     rgba(255,255,255,.22);
+    }
+
+    /* ── Right panel — form ──────────────────────────── */
+    .erp-form-panel {
+      flex:            1;
+      display:         flex;
+      align-items:     center;
+      justify-content: center;
+      padding:         40px 24px;
+      background:      #0f1923;
+    }
+
+    .erp-form-card {
+      width:     100%;
+      max-width: 420px;
+    }
+
+    .erp-form-header {
+      text-align:    center;
+      margin-bottom: 36px;
+    }
+    .erp-form-header h2 {
+      color:         #fff;
+      font-size:     26px;
+      font-weight:   700;
+      margin-bottom: 6px;
+      letter-spacing: -.3px;
+    }
+    .erp-form-header p {
+      color:     rgba(255,255,255,.38);
+      font-size: 13.5px;
+      margin:    0;
+    }
+
+    /* ── Form controls ───────────────────────────────── */
+    .erp-field {
+      margin-bottom: 18px;
+    }
+    .erp-field label {
+      display:       block;
+      font-size:     12.5px;
+      font-weight:   600;
+      color:         rgba(255,255,255,.55);
+      margin-bottom: 7px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+
+    .erp-input-wrap {
+      position: relative;
+    }
+
+    .erp-input-wrap .erp-field-icon {
+      position:   absolute;
+      left:       14px;
+      top:        50%;
+      transform:  translateY(-50%);
+      color:      rgba(255,255,255,.25);
+      font-size:  14px;
+      pointer-events: none;
+    }
+
+    .erp-input {
+      width:         100%;
+      height:        48px;
+      background:    rgba(255,255,255,.06);
+      border:        1.5px solid rgba(255,255,255,.1);
+      border-radius: 10px;
+      color:         #fff;
+      font-size:     14px;
+      padding:       0 44px 0 42px;
+      transition:    border-color .18s, background .18s, box-shadow .18s;
+      outline:       none;
+    }
+    .erp-input::placeholder { color: rgba(255,255,255,.22); }
+    .erp-input:focus {
+      border-color: #00a86b;
+      background:   rgba(0,168,107,.06);
+      box-shadow:   0 0 0 3px rgba(0,168,107,.14);
+    }
+    .erp-input.is-invalid {
+      border-color: #ef4444;
+      background:   rgba(239,68,68,.06);
+    }
+    .erp-input.is-invalid:focus {
+      box-shadow: 0 0 0 3px rgba(239,68,68,.14);
+    }
+
+    /* Password toggle */
+    .erp-pw-toggle {
+      position:   absolute;
+      right:      14px;
+      top:        50%;
+      transform:  translateY(-50%);
+      color:      rgba(255,255,255,.3);
+      cursor:     pointer;
+      font-size:  14px;
+      padding:    4px;
+      border:     none;
+      background: none;
+      transition: color .15s;
+    }
+    .erp-pw-toggle:hover { color: rgba(255,255,255,.7); }
+
+    /* Remember me */
+    .erp-remember {
+      display:     flex;
+      align-items: center;
+      gap:         8px;
+      margin:      4px 0 22px;
+    }
+    .erp-remember input[type="checkbox"] {
+      width:         16px;
+      height:        16px;
+      accent-color:  #00a86b;
+      cursor:        pointer;
+    }
+    .erp-remember label {
+      font-size: 13px;
+      color:     rgba(255,255,255,.45);
+      cursor:    pointer;
+      margin:    0;
+    }
+
+    /* Submit button */
+    .erp-btn-login {
+      width:         100%;
+      height:        50px;
+      background:    linear-gradient(135deg, #00a86b, #00d183);
+      border:        none;
+      border-radius: 10px;
+      color:         #fff;
+      font-size:     15px;
+      font-weight:   700;
+      letter-spacing: .3px;
+      cursor:        pointer;
+      transition:    opacity .18s, transform .12s, box-shadow .18s;
+      display:       flex;
+      align-items:   center;
+      justify-content: center;
+      gap:           8px;
+      box-shadow:    0 4px 20px rgba(0,168,107,.35);
+    }
+    .erp-btn-login:hover:not(:disabled) {
+      opacity:    .92;
+      box-shadow: 0 6px 28px rgba(0,168,107,.5);
+      transform:  translateY(-1px);
+    }
+    .erp-btn-login:active:not(:disabled) { transform: translateY(0); }
+    .erp-btn-login:disabled {
+      opacity: .65;
+      cursor:  not-allowed;
+    }
+
+    .erp-btn-spinner {
+      width:        18px;
+      height:       18px;
+      border:       2.5px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation:    erp-spin .7s linear infinite;
+      display:      none;
+      flex-shrink:  0;
+    }
+    .erp-btn-spinner.show { display: block; }
+    @keyframes erp-spin { to { transform: rotate(360deg); } }
+
+    /* Forgot password link */
+    .erp-forgot {
+      text-align:  right;
+      margin-top:  -10px;
+      margin-bottom: 22px;
+    }
+    .erp-forgot a {
+      font-size:  12.5px;
+      color:      rgba(255,255,255,.4);
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .erp-forgot a:hover { color: #00c47e; }
+
+    /* Divider */
+    .erp-divider {
+      display:     flex;
+      align-items: center;
+      gap:         12px;
+      margin:      24px 0 20px;
+    }
+    .erp-divider::before, .erp-divider::after {
+      content:    '';
+      flex:       1;
+      height:     1px;
+      background: rgba(255,255,255,.1);
+    }
+    .erp-divider span {
+      font-size:  11.5px;
+      color:      rgba(255,255,255,.25);
+      white-space: nowrap;
+    }
+
+    /* Alert box */
+    .erp-alert {
+      border-radius: 10px;
+      padding:       12px 16px;
+      font-size:     13.5px;
+      margin-bottom: 20px;
+      display:       flex;
+      align-items:   flex-start;
+      gap:           10px;
+      border:        1.5px solid transparent;
+    }
+    .erp-alert-error {
+      background:   rgba(239,68,68,.12);
+      border-color: rgba(239,68,68,.25);
+      color:        #fca5a5;
+    }
+    .erp-alert-success {
+      background:   rgba(0,168,107,.12);
+      border-color: rgba(0,168,107,.25);
+      color:        #6ee7b7;
+    }
+    .erp-alert-warning {
+      background:   rgba(245,158,11,.1);
+      border-color: rgba(245,158,11,.25);
+      color:        #fcd34d;
+    }
+    .erp-alert i { margin-top: 1px; flex-shrink: 0; }
+    .erp-alert.d-none { display: none !important; }
+
+    /* Footer note */
+    .erp-footer-note {
+      text-align:  center;
+      margin-top:  28px;
+      font-size:   11.5px;
+      color:       rgba(255,255,255,.2);
+    }
+
+    /* Parsley error styling */
+    .parsley-errors-list {
+      list-style:  none;
+      padding:     0;
+      margin:      5px 0 0;
+    }
+    .parsley-errors-list li {
+      font-size:  12px;
+      color:      #f87171;
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+      .erp-brand-panel { display: none; }
+      .erp-form-panel  { padding: 32px 20px; }
+    }
+  </style>
+
+  <!-- Core scripts (needed for Parsley) -->
+  <script src="/js/app.min.js"></script>
+  <script src="/js/vendor.min.js"></script>
+  <script src="/js/plugins/sweetalert.js"></script>
+  <script src="/js/plugins/parsley.min.js"></script>
+  <script src="/js/application.js"></script>
+</head>
+
+<body>
+
+<div class="erp-login-wrap">
+
+  <!-- ═══════════════════════════════════════════════════
+       LEFT PANEL — Branding
+       ═══════════════════════════════════════════════════ -->
+  <aside class="erp-brand-panel">
+    <div class="erp-brand-top">
+
+      <!-- Logo -->
+      <div class="erp-logo-mark">
+        <div class="erp-logo-icon">
+          <i class="fa fa-industry"></i>
+        </div>
+        <div class="erp-logo-text">
+          <strong>Spindles ERP</strong>
+          <span>Enterprise Resource Planning</span>
+        </div>
+      </div>
+
+      <!-- Tagline -->
+      <div class="erp-tagline">
+        Manage your entire<br>
+        yarn production<br>
+        <em>from one place.</em>
+      </div>
+
+      <p class="erp-sub">
+        Integrated procurement, production, inventory, and commercial
+        operations — built for the textile industry.
+      </p>
+
+      <!-- Feature highlights -->
+      <ul class="erp-feature-list">
+        <li>
+          <i class="fa fa-check"></i>
+          Real-time production order tracking
+        </li>
+        <li>
+          <i class="fa fa-check"></i>
+          Multi-org &amp; multi-warehouse support
+        </li>
+        <li>
+          <i class="fa fa-check"></i>
+          Approval workflow engine
+        </li>
+        <li>
+          <i class="fa fa-check"></i>
+          Export &amp; commercial document management
+        </li>
+        <li>
+          <i class="fa fa-check"></i>
+          Role-based access control
+        </li>
+      </ul>
+    </div>
+
+    <div class="erp-brand-footer">
+      &copy; <span id="brandYear"></span> Spindles ERP. All rights reserved.
+    </div>
+  </aside>
+
+
+  <!-- ═══════════════════════════════════════════════════
+       RIGHT PANEL — Login Form
+       ═══════════════════════════════════════════════════ -->
+  <main class="erp-form-panel">
+    <div class="erp-form-card">
+
+      <div class="erp-form-header">
+        <h2>Welcome back</h2>
+        <p>Sign in to your Spindles ERP account</p>
+      </div>
+
+      <!-- ── Session / Auth Status Alert ──────────────── -->
+      <!-- Shown/hidden by JS based on URL params -->
+      <div id="loginAlert" class="erp-alert d-none" role="alert">
+        <i id="loginAlertIcon" class="fa fa-exclamation-circle"></i>
+        <span id="loginAlertMsg"></span>
+      </div>
+
+      <!-- ── Spring Security Login Form ───────────────── -->
+      <!--
+        action="/login"   — Spring Security's default login processing URL.
+        Thymeleaf version: th:action="@{/login}"
+      -->
+      <form id="loginForm"
+            action="/login"
+            method="POST"
+            data-parsley-validate="true"
+            autocomplete="on"
+            novalidate>
+
+        <!-- CSRF token — Thymeleaf/Spring injects the real value at render time -->
+        <input type="hidden" name="_csrf" id="csrfToken" value="">
+
+        <!-- ── Username ────────────────────────────────── -->
+        <div class="erp-field">
+          <label for="username">Username</label>
+          <div class="erp-input-wrap">
+            <i class="fa fa-user erp-field-icon"></i>
+            <input type="text"
+                   class="erp-input"
+                   id="username"
+                   name="principal"
+                   placeholder="Enter your username"
+                   autocomplete="username"
+                   required
+                   data-parsley-required="true"
+                   data-parsley-required-message="Username is required."
+                   data-parsley-trigger="focusout submit">
+          </div>
+        </div>
+
+        <!-- ── Password ────────────────────────────────── -->
+        <div class="erp-field">
+          <label for="password">Password</label>
+          <div class="erp-input-wrap">
+            <i class="fa fa-lock erp-field-icon"></i>
+            <input type="password"
+                   class="erp-input"
+                   id="password"
+                   name="password"
+                   placeholder="Enter your password"
+                   autocomplete="current-password"
+                   required
+                   data-parsley-required="true"
+                   data-parsley-required-message="Password is required."
+                   data-parsley-trigger="focusout submit">
+            <button type="button"
+                    class="erp-pw-toggle"
+                    id="pwToggle"
+                    aria-label="Show/hide password"
+                    title="Toggle password visibility">
+              <i class="fa fa-eye" id="pwToggleIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Remember Me + Forgot ──────────────────── -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;">
+          <div class="erp-remember" style="margin:0;">
+            <!-- Spring Security remember-me field name is "remember-me" by default -->
+            <input type="checkbox" id="rememberMe" name="remember-me" value="on">
+            <label for="rememberMe">Keep me signed in</label>
+          </div>
+          <div>
+            <a href="/forgot-password" id="forgotLink">Forgot password?</a>
+          </div>
+        </div>
+
+        <!-- ── Submit Button ──────────────────────────── -->
+        <button type="submit" class="erp-btn-login" id="loginBtn">
+          <span class="erp-btn-spinner" id="loginSpinner"></span>
+          <span id="loginBtnText">Sign In</span>
+        </button>
+
+      </form>
+
+      <!-- Footer note -->
+      <div class="erp-footer-note">
+        Having trouble? Contact your system administrator.
+      </div>
+
+    </div>
+  </main>
+
+</div><!-- /erp-login-wrap -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS
+     ═══════════════════════════════════════════════════════ -->
+<script>
+/* ── Copyright year ─────────────────────────────────── */
+document.getElementById('brandYear').textContent = new Date().getFullYear();
+
+/* ── CSRF token from XSRF-TOKEN cookie ──────────────────
+   CookieCsrfTokenRepository sets an XSRF-TOKEN cookie
+   (httpOnly=false) that JS can read and inject into the
+   hidden _csrf field before the native form POST.
+   Thymeleaf th:action handles this automatically; here
+   we do it manually for the standalone assembled build.
+   ─────────────────────────────────────────────────────── */
+(function injectCsrf() {
+    const m = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+    if (m) document.getElementById('csrfToken').value = decodeURIComponent(m[1]);
+})();
+
+
+/* u2500u2500 CSRF token from cookie u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500
+   SecurityConfig uses CookieCsrfTokenRepository which stores
+   the token in an XSRF-TOKEN cookie (httpOnly=false). We read
+   it and fill the hidden _csrf field before form submit.
+   Thymeleaf th:action does this automatically; here we do it
+   manually for the assembled standalone version.
+   u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500 */
+
+/* ── URL param → alert message ──────────────────────────
+   Spring Security appends ?error / ?logout / ?expired / ?disabled
+   to the login redirect URL.
+   ─────────────────────────────────────────────────────── */
+(function handleUrlState() {
+    const params  = new URLSearchParams(window.location.search);
+    const alert   = document.getElementById('loginAlert');
+    const icon    = document.getElementById('loginAlertIcon');
+    const msg     = document.getElementById('loginAlertMsg');
+
+    const show = (type, iconClass, text) => {
+        alert.classList.remove('d-none', 'erp-alert-error', 'erp-alert-success', 'erp-alert-warning');
+        alert.classList.add('erp-alert-' + type);
+        icon.className = iconClass;
+        msg.textContent = text;
+    };
+
+    if (params.has('error')) {
+        show('error', 'fa fa-times-circle', 'Invalid username or password. Please try again.');
+        document.getElementById('password').value = '';
+        document.getElementById('password').focus();
+    } else if (params.has('logout')) {
+        show('success', 'fa fa-check-circle', 'You have been signed out successfully.');
+    } else if (params.has('expired')) {
+        show('warning', 'fa fa-clock', 'Your session has expired. Please sign in again.');
+    } else if (params.has('disabled')) {
+        show('error', 'fa fa-ban', 'Your account has been disabled. Contact your administrator.');
+    }
+})();
+
+/* ── Password show / hide toggle ────────────────────── */
+document.getElementById('pwToggle').addEventListener('click', function () {
+    const input = document.getElementById('password');
+    const icon  = document.getElementById('pwToggleIcon');
+    const show  = input.type === 'password';
+    input.type  = show ? 'text' : 'password';
+    icon.className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
+    input.focus();
+});
+
+/* ── Form submit — spinner + Parsley validation ─────── */
+document.getElementById('loginForm').addEventListener('submit', function (e) {
+
+    // Run Parsley validation first
+    if (!$(this).parsley().isValid()) {
+        e.preventDefault();
+        return;
+    }
+
+    // Show spinner, disable button (Spring Security does the actual POST)
+    const btn     = document.getElementById('loginBtn');
+    const spinner = document.getElementById('loginSpinner');
+    const text    = document.getElementById('loginBtnText');
+
+    btn.disabled           = true;
+    spinner.classList.add('show');
+    text.textContent       = 'Signing in…';
+
+    // Let the native form submit proceed — Spring Security handles the POST.
+    // No e.preventDefault() here.
+});
+
+/* ── Parsley custom styling hook ────────────────────── */
+window.Parsley.on('field:error', function () {
+    this.$element.addClass('is-invalid');
+});
+window.Parsley.on('field:success', function () {
+    this.$element.removeClass('is-invalid');
+});
+
+/* ── Auto-focus username field (unless error already focused password) ── */
+const params = new URLSearchParams(window.location.search);
+if (!params.has('error')) {
+    document.getElementById('username').focus();
+}
+</script>
+
+</body>
+</html>

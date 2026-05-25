@@ -1,57 +1,107 @@
 package com.hasnat.optimum.security.handler;
 
-import com.hasnat.optimum.security.entity.User;
-import com.hasnat.optimum.security.repository.UserRepository;
 import com.hasnat.optimum.security.service.CustomUserDetails;
-import jakarta.servlet.http.*;
-import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Map;
 
+/**
+ * Runs immediately after a successful login.
+ *
+ * Responsibilities:
+ *  1. Clear any stale failure-count stored in the session.
+ *  2. Store lightweight user info in the session for Thymeleaf fragments.
+ *  3. Redirect to the user's default dashboard (role-based) or a
+ *     previously-requested URL saved by Spring's RequestCache.
+ */
+@Slf4j
 @Component
-@RequiredArgsConstructor
-public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
+public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final UserRepository userRepository;
-
-    /** Maps DefaultDashboard enum → URL */
-    private static final Map<User.DefaultDashboard, String> DASHBOARD_URLS = Map.ofEntries(
-            Map.entry(User.DefaultDashboard.CORE_SECURITY,               "/dashboard/security"),
-            Map.entry(User.DefaultDashboard.ACCESS_MENU,                 "/dashboard/access"),
-            Map.entry(User.DefaultDashboard.HRM,                         "/dashboard/hrm"),
-            Map.entry(User.DefaultDashboard.SALES_CUSTOMER_OPERATIONS,   "/dashboard/sales"),
-            Map.entry(User.DefaultDashboard.PURCHASE_SUPPLIER,           "/dashboard/purchase"),
-            Map.entry(User.DefaultDashboard.INVENTORY_WAREHOUSE,         "/dashboard/inventory"),
-            Map.entry(User.DefaultDashboard.FINANCE_ACCOUNTS,            "/dashboard/finance"),
-            Map.entry(User.DefaultDashboard.PRODUCTION,                  "/dashboard/production"),
-            Map.entry(User.DefaultDashboard.PRODUCT_CATALOG_ECOMMERCE,   "/dashboard/ecommerce"),
-            Map.entry(User.DefaultDashboard.POS,                         "/dashboard/pos"),
-            Map.entry(User.DefaultDashboard.CRM,                         "/dashboard/crm"),
-            Map.entry(User.DefaultDashboard.COMMUNICATION_NOTIFICATION,  "/dashboard/notifications"),
-            Map.entry(User.DefaultDashboard.COMMERCIAL,                  "/dashboard/commercial"),
-            Map.entry(User.DefaultDashboard.REPORTS_ANALYTICS,           "/dashboard/reports")
-    );
+    // Session attribute keys — must match what Thymeleaf / JS reads
+    public static final String SESSION_USER_ID       = "userId";
+    public static final String SESSION_USERNAME      = "username";
+    public static final String SESSION_FULL_NAME     = "fullName";
+    public static final String SESSION_EMAIL         = "email";
+    public static final String SESSION_LOGIN_TIME    = "loginTime";
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest req,
-                                        HttpServletResponse res,
-                                        Authentication auth) throws IOException {
-        CustomUserDetails details = (CustomUserDetails) auth.getPrincipal();
+    public void onAuthenticationSuccess(
+            HttpServletRequest  request,
+            HttpServletResponse response,
+            Authentication      authentication) throws IOException {
 
-        // Update last login timestamp
-        userRepository.findById(details.getUserId()).ifPresent(u -> {
-            u.setLastLoginAt(LocalDateTime.now());
-            userRepository.save(u);
-        });
+        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
 
-        // Redirect to dashboard
-        String target = DASHBOARD_URLS.getOrDefault(
-                details.getDefaultDashboard(), "/dashboard");
-        res.sendRedirect(req.getContextPath() + target);
+        // ── Store user info in session for quick access ───────────────────────
+        HttpSession session = request.getSession(true);
+        session.setAttribute(SESSION_USER_ID,    principal.getUserId());
+        session.setAttribute(SESSION_USERNAME,   principal.getUsername());
+        session.setAttribute(SESSION_FULL_NAME,  principal.getFullName());
+        session.setAttribute(SESSION_EMAIL,      principal.getEmail());
+        session.setAttribute(SESSION_LOGIN_TIME, LocalDateTime.now().toString());
+
+        log.info("[LOGIN] user='{}' id={} ip='{}' at={}",
+            principal.getUsername(),
+            principal.getUserId(),
+            getClientIp(request),
+            LocalDateTime.now()
+        );
+
+        // ── Determine redirect target ─────────────────────────────────────────
+        String redirectUrl = determineRedirect(principal);
+
+        clearAuthenticationAttributes(request);   // remove SPRING_SECURITY_LAST_EXCEPTION
+        getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Role-based redirect logic
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private String determineRedirect(CustomUserDetails principal) {
+
+        // 1. User has a personally configured default dashboard
+        if (principal.getDefaultDashboard() != null) {
+            return switch (principal.getDefaultDashboard()) {
+                case PRODUCTION  -> "/production/dashboard";
+                case INVENTORY_WAREHOUSE   -> "/inventory/dashboard";
+                case COMMERCIAL  -> "/commercial/dashboard";
+                default          -> "/dashboard";
+            };
+        }
+
+        // 2. Fall back to role-based default
+        if (principal.hasRole("ROLE_SUPER_ADMIN")) return "/dashboard";
+        if (principal.hasRole("ROLE_ADMIN"))       return "/dashboard";
+        if (principal.hasRole("ROLE_PRODUCTION"))  return "/production/dashboard";
+        if (principal.hasRole("ROLE_INVENTORY"))   return "/inventory/dashboard";
+        if (principal.hasRole("ROLE_COMMERCIAL"))  return "/commercial/dashboard";
+
+        // 3. Generic fallback
+        return "/dashboard";
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Extract the real client IP, respecting common reverse-proxy headers.
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        return realIp != null ? realIp : request.getRemoteAddr();
     }
 }
